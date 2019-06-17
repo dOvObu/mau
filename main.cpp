@@ -1,13 +1,4 @@
-#include <map>
-#include <cstdio>
-#include <Windows.h>
-#include <fstream>
-#include <iostream>
-#include <vector>
-#include <memory>
-#include <utility>
-#include <locale>
-
+﻿
 #include "gswstr.h"
 #include "tokens.h"
 #include "lexer_without_keys.h"
@@ -16,7 +7,17 @@
 #include "parser_of_binary_operators.h"
 #include "parser_of_conditional_and_loop_statements_and_lambda_defs.h"
 
-#include "parser_nodes.h"
+
+#include <map>
+#include <cstdio>
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <utility>
+#include <locale>
+
 
 
 
@@ -38,23 +39,54 @@ int main()
 		system ("pause");
 		return 0;
 	}
-	cout << "tokens.size == " << tokens.size () << "\n";
+	printf ("tokens.size == %zu\n", tokens.size ());
 	int co = 0;
-
-	if (!lexer_2 (tokens)) { // adding key-words, finding unary minuses and deleting unary pluses
+	
+	//printTokens ("\n\n\n===----- after lexer_1 -----===\n\n", tokens, "\n\n\n");
+	//> добавление key-слов
+	//> поиск унарных минусов
+	//> удаление унарных плюсов
+	//> установка границ типов
+	//> поиск скобок типа лямбд \() и типа шаблонов !()
+	try {
+		if (!lexer_2 (tokens)) {
+			system ("pause");
+			return 1;
+		}
+	} catch (std::string str) {
+		dlog (str);
 		system ("pause");
 		return 1;
 	}
 
-	// for (auto& id : tokens)
-	// 	if (id->type () == Tok::Id)
-	// 		std::wcout << as<Id_t>(id)->getId() << std::endl;
+	printTokens ("\n\n\n===----- after lexer_2 -----===\n\n", tokens, "\n\n\n");
 
-	parser_1 (tokens, lists); // adding fieldCall, functionCall, arrayCall, vector definitions, dictionary definitions and unary operators
-	parser_3 (lists); // adding if, if-else, if-elif, if-elif-else, while, for statements and lambda definitions
-	//parser_2 (lists); // adding binary operators
+	// Добавление fieldCall obj.kek, functionCall, arrayCall, vectorDef +(1, 2, 3)+,
+	// dictionaryDef +("one" : 10, "two" : 20)+ и унарных операторов
+	parser_1 (tokens, lists);
+	std::remove_if (std::begin (lists), std::end (lists), [](auto* t) {return t->empty (); });
+
+	printf ("\n\n\n===----- after parser_1 -----===\n");
+	//for (auto& it : lists) printTokens ("\n", *it, "\n");
+	printf ("\n\n");
+
+	// Добавление if, if-else, if-elif, if-elif-else, while, for statements
+	// and lambda definitions
+	parser_3 (lists);
+	std::remove_if (std::begin (lists), std::end (lists), [](auto* t) {return t->empty (); });
+
+
+	printf ("\n\n\n===----- after parser_3 -----===\n");
+	//for (auto& it : lists) printTokens ("\n", *it, "\n");
+	printf ("\n\n");
+
+	// Добавление бинарных операторов
+	////                                      parser_2 (lists);
+	
 	//parser_4 (tokens); // adding assignments
-	//parser_5 (tokens); // adding class definitions
+	//parser_5 (tokens); // adding struct and impl definitions
+	//parser_6 (tokens); // adding templateDef
+	//analysis_1 (tokens); // вывод типов и генерация функций на основе шаблонов
 
 	//parse_to_tree(,)
 
