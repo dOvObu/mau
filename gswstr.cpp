@@ -5,8 +5,9 @@ static std::vector<wchar_t> s_abc[2];
 static std::wstring* ws{nullptr};
 
 
-unsigned find_lin(std::vector<wchar_t>& s, wchar_t c) {
-	for (unsigned idx = 0, const size = s.size (); idx < size; ++idx) {
+std::wstring::size_type find_lin(std::vector<wchar_t>& s, wchar_t c) {
+	const auto size = s.size (); 
+	for (size_t idx = 0; idx < size; ++idx) {
 		if (s[idx] == c) return idx;
 	}
 	return std::wstring::npos;
@@ -14,7 +15,7 @@ unsigned find_lin(std::vector<wchar_t>& s, wchar_t c) {
 
 void cToL (wchar_t c, std::string* s)
 {
-	unsigned idx = 0;
+	std::wstring::size_type idx = 0;
 	if ((idx = find_lin (s_abc[0], c)) != std::wstring::npos) {
 		s->push_back (s_abc[1][idx]);
 		return;
