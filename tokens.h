@@ -281,7 +281,11 @@ struct Throw_t			: Token { Tok type () {return Tok::Throw;} };
 struct Try_t			: Token { Tok type () {return Tok::Try;} };
 struct Catch_t			: Token { Tok type () {return Tok::Catch;} };
 struct ForKey_t : Token { Tok type () { return Tok::ForKey; } };
-struct For_t			: Token { Tok type () {return Tok::For;} };
+struct For_t			: Token {
+	Tok type () {return Tok::For;}
+	std::shared_ptr<Id_t> iter{nullptr}, idx{nullptr};
+	std::shared_ptr<Token> body{nullptr}, range{nullptr};
+};
 struct WhileKey_t : Token { Tok type () { return Tok::WhileKey; } };
 struct While_t			: Token {
 	Tok type () {return Tok::While;}

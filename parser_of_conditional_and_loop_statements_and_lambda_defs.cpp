@@ -107,6 +107,58 @@ void packArguments (
 	//dlog ("done");
 }
 
+
+void reduceForLoopWithBody (
+	vec_shp_t& tokens,
+	size_t idx,
+	size_t ldx,
+	size_t jdx,
+	size_t kdx)
+{
+    // [idx]->['при'или'инапри'] ... [jdx]->'{'...[kdx]->'} ELSE' {0}
+    // или              -----------||-----------  [kdx]->'} ELIF' {1}
+    // или              -----------||-----------    ';)'<-[kdx]   {2}
+    // или              -----------||-----------    ';;'<-[kdx]   {3}
+    //std::cout << "one\n";
+	For_t* p_for;
+	tokens[idx].reset (p_for = new For_t ());
+    Tok type = tokens[kdx]->type ();
+	{// записали название итератора и индекса
+		bool first = true;
+		for (size_t i = idx; i < ldx; ++i) {
+			if (tokens[i]->type() == Tok::Id) {
+				if (first) {
+					p_for->iter = as<Id_t>(tokens[i]);
+					first = false;
+				} else {
+					p_for->idx = as<Id_t>(tokens[i]);
+					break;
+				}
+			}
+		}
+	}
+	// записали источник ряда
+    Expr_t* p_expr;
+	p_for->range.reset(p_expr = new Expr_t());
+	p_expr -> l.reset (
+		new std::vector<std::shared_ptr<Token> > (
+			std::begin(tokens) + ldx + 1,
+			std::begin(tokens) + jdx));
+	
+	// записали тело
+    p_for -> body.reset (p_expr = new Expr_t ());
+    p_expr -> l.reset (
+        new std::vector<std::shared_ptr<Token> > (
+			std::begin(tokens) + jdx + 1,
+			std::begin(tokens) + kdx)
+    );
+	// удалили всё, оставив сокращённый For_t в idx
+    tokens.erase (
+		std::begin(tokens) + idx + 1,
+		std::begin(tokens) + kdx + 1);
+}
+
+
 void reduce_body_of_lambdas_conditions_and_loops (
 	vec_shp_t& tokens,
 	std::set<Tok> triggers,
@@ -192,7 +244,6 @@ void reduce_body_of_lambdas_conditions_and_loops (
 				// или -----------||-----------  [?]->'} ELSE'
 				// или -----------||-----------  [?]->'} ELIF'
 				// Поиск конца тела
-				//dlog ("if");
 				auto kdx = jdx + 1;
 				while (tokens_size > kdx && tokens[kdx]->type () == Tok::Space) ++kdx;
 				// тут условие с пустым телом, если первый элементв теле (при х==1 {: ->;) или (при х==0 {: ->);
@@ -236,8 +287,37 @@ void reduce_body_of_lambdas_conditions_and_loops (
 			
 			else if (type == Tok::ForKey) {
 				// TODO: Распознать конец тела
-				// [idx]->'для' 'id' ',id'? [?]->':'... [jdx]->'{' ... ';;'<-[?]
+				// [idx]->'для' 'x_id' 'i_id' [?]->'in some_range' [jdx]->'{' ... ';;'<-[?]
+				size_t ldx = idx + 1;
+				while (ldx < jdx && tokens[ldx]->type() != Tok::In) ++ldx;
+				// [idx]->'для' ... [ldx]->'in some_range' [jdx]->'{' ... ';;'<-[?]
+				
+				auto kdx = jdx+1;
+				while (tokens_size > kdx && tokens[kdx]->type () == Tok::Space) ++kdx;
+				// тут условие с пустым телом, если первый элементв теле (при х==1 {: ->;) или (при х==0 {: ->);
+				bool emptyBody = true;
 
+				Tok type = tokens[kdx]->type ();
+				int closerType = 0;
+				if (tokens_size > kdx && type != Tok::Semicolon && !isCloser (type)) { // если тело оказалось не пустым
+					emptyBody = false;
+					depth = 0;
+					Tok prew_type = Tok::OpenBodyOfLambda;
+					while (kdx < tokens_size) {
+						Tok type = tokens[kdx] -> type ();
+						if (isOpener(type)) ++depth;
+						else if (isCloser (type)) {if (depth != 0) --depth; else break;}
+						// если мы на своей глубине встретили закрытие тела, либо две ';' подряд, то мы нашли тело
+						if (depth == 0) {
+							if (type == Tok::CloseBody) break;
+							if (type == Tok::Semicolon && prew_type == Tok::Semicolon) {--kdx; break;}
+						}
+						if (type != Tok::Space) prew_type = type; // ';' ~whitespace~ ';' -- допустимо такое завершение тела
+						++kdx;
+					}
+				}
+				// [idx]->'для' 'id' 'id' [ldx]->'in some_range' [jdx]->'{' ... ';;'<-[?]
+				reduceForLoopWithBody (tokens, idx, ldx, jdx, kdx);
 			}
 		}
 
