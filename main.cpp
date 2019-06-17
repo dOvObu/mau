@@ -1,6 +1,5 @@
-﻿
+﻿#include "tokens.h"
 #include "gswstr.h"
-#include "tokens.h"
 #include "lexer_without_keys.h"
 #include "lexer_detect_keys.h"
 #include "parser_of_calls_and_unary_operators.h"
@@ -29,11 +28,11 @@ int main()
 	//SetConsoleCP (1251);
 	//SetConsoleOutputCP (1251);
 
-	loadABC ("ab.txt");
-	loadKeyWords ("kw.txt");
+	loadABC ("../ab.txt");
+	loadKeyWords ("../kw.txt");
 	vector <shp_t> tokens;
 	vector<vector<shp_t>*> lists;
-	lexer_1 ("shit_0.txt", tokens);
+	lexer_1 ("../shit_0.txt", tokens);
 	
 	if (tokens.empty ()) {
 		system ("pause");
@@ -79,7 +78,7 @@ int main()
 	printf ("\n\n\n===----- after parser_3 -----===\n");
 	//for (auto& it : lists) printTokens ("\n", *it, "\n");
 	printf ("\n\n");
-
+	
 	// Добавление бинарных операторов
 	////                                      parser_2 (lists);
 	
@@ -90,7 +89,7 @@ int main()
 
 	//parse_to_tree(,)
 
-	system ("pause");
+	//system ("pause");
 
 	//SetConsoleCP (866);
 	//SetConsoleOutputCP (866);

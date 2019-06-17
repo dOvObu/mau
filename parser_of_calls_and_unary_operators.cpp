@@ -129,65 +129,6 @@ void parser_1(std::vector <shp_t>& tokens, std::vector<std::vector<shp_t>*>& lis
 
 }//-----------------------------------------------------------------//
 
-inline bool isOpener (Tok type){return type == Tok::OpenParenthesis || type == Tok::OpenBrackets || type == Tok::OpenCurlyBrackets;}
-inline bool isCloser (Tok type){return type == Tok::CloseParenthesis || type == Tok::CloseBrackets || type == Tok::CloseCurlyBrackets;}
-
-size_t findCloser (std::vector<shp_t>& tokens, Tok opn, Tok cls, size_t jdx) {
-	const auto size = tokens.size();
-	unsigned depth = 1;
-	size_t kdx = jdx + 1;
-	for(;depth != 0 && kdx < size; ++kdx) {
-		const auto type = tokens[kdx]->type();
-		if (type == opn) ++depth;
-		else if (type == cls) --depth;
-	}
-	return kdx;
-}
-size_t findCloser_ (std::vector<shp_t>& tokens, size_t jdx) {
-	const auto size = tokens.size();
-	unsigned depth = 1;
-	size_t kdx = jdx + 1;
-	for(;depth != 0 && kdx < size; ++kdx) {
-		const auto type = tokens[kdx]->type();
-		if (isOpener (type)) ++depth;
-		else if (isCloser (type)) --depth;
-	}
-	return kdx;
-}
-
-size_t findOpener (std::vector<shp_t>& tokens, Tok opn, Tok cls, size_t jdx) {
-	unsigned depth = 1;
-	size_t kdx = jdx - 1;
-	while (depth != 0) {
-		const auto type = tokens[kdx]->type();
-		if (type == cls) ++depth;
-		else if (type == opn) --depth;
-		if (kdx == 0) break;
-		--kdx;
-	}
-	return kdx;
-}
-size_t findOpener (std::vector<shp_t>& tokens, size_t jdx) {
-	unsigned depth = 1;
-	size_t kdx = jdx - 1;
-	while (depth != 0) {
-		const auto type = tokens[kdx]->type();
-		if (isCloser (type)) ++depth;
-		else if (isOpener (type)) --depth;
-		if (kdx == 0) break;
-		--kdx;
-	}
-	return kdx;
-}
-
-Tok openerFor(Tok closer_type) {
-	switch (closer_type) {
-		case Tok::CloseBrackets: return Tok::OpenBrackets;
-		case Tok::CloseParenthesis: return Tok::OpenParenthesis;
-		case Tok::CloseCurlyBrackets: return Tok::OpenCurlyBrackets;
-		default: return Tok::Dot;
-	}
-}
 
 
 template <typename T>

@@ -271,6 +271,7 @@ struct Elif_t			: Token {
 };
 struct Else_t			: Token {
 	Tok type () {return Tok::Else;}
+	std::shared_ptr<Token> condition{nullptr};
 	std::shared_ptr<Token> body{nullptr}, alternative{nullptr};
 	void run (Runner* v) {v->run(this);}
 };
@@ -285,6 +286,7 @@ struct WhileKey_t : Token { Tok type () { return Tok::WhileKey; } };
 struct While_t			: Token {
 	Tok type () {return Tok::While;}
 	void run (Runner* v) {v->run(this);}
+	bool alternative;
 	std::shared_ptr<struct Expr_t> condition{nullptr};
 	std::shared_ptr<Token> body{nullptr};	//, alternative{nullptr};
 };
@@ -324,12 +326,13 @@ private:
 
 
 struct String_t						: Token {
-				Tok type () {return Tok::String;}
-				void setId (const std::wstring& str){this->str = str;}
-				std::wstring getId () {return str;}
-				void run (Runner* v) { v->run (this); }
+	Tok type () {return Tok::String;}
+	void setId (const std::wstring& str) {this->str = str;}
+	std::wstring getId () {return str;}
+	void run (Runner* v) {v->run (this);}
+
 private:
-				std::wstring str;
+	std::wstring str;
 };
 
 
@@ -516,7 +519,14 @@ struct Spy2 : Runner {
 	void run (UInt_t* t) override {  }
 	void run (Int_t* t) override { std::cout << "[i" << t->getInt () << "]"; }
 	void run (Float_t* t) override { std::cout << "[f" << t->getFloat () << "]"; }
-	void run (String_t* t) override { std::wcout << L"[s'" << t->getId () << L"']"; }
+	void run (String_t* t) override {
+		std::wcout << L"[s'"
+		#ifdef __unix__
+			; std::cout << wstos(t->getId()) << "']" << std::endl;
+		#else
+			<< t->getId () << L"']";
+		#endif
+	}
 	void run (Expr_t* t) override {
 		for (auto& it : *(t->l.get())) {it->run (this);}
 	}
@@ -618,6 +628,71 @@ inline void printTokens (const char str[], std::vector<std::shared_ptr<Token> >&
 	printf (str);
 	printTokens_ (tokens);
 	printf (str2);
+}
+
+inline bool isCloser (Tok type){
+	return type == Tok::CloseParenthesis || type == Tok::CloseBrackets || type == Tok::CloseCurlyBrackets;
+}
+
+inline bool isOpener (Tok type){
+	return type == Tok::OpenParenthesis || type == Tok::OpenBrackets || type == Tok::OpenCurlyBrackets;
+}
+
+inline size_t findCloser (std::vector<std::shared_ptr<Token>>& tokens, Tok opn, Tok cls, size_t jdx) {
+	const auto size = tokens.size();
+	unsigned depth = 1;
+	size_t kdx = jdx + 1;
+	for(;depth != 0 && kdx < size; ++kdx) {
+		const auto type = tokens[kdx]->type();
+		if (type == opn) ++depth;
+		else if (type == cls) --depth;
+	}
+	return kdx;
+}
+inline size_t findCloser_ (std::vector<std::shared_ptr<Token>>& tokens, size_t jdx) {
+	const auto size = tokens.size();
+	unsigned depth = 1;
+	size_t kdx = jdx + 1;
+	for(;depth != 0 && kdx < size; ++kdx) {
+		const auto type = tokens[kdx]->type();
+		if (isOpener (type)) ++depth;
+		else if (isCloser (type)) --depth;
+	}
+	return kdx;
+}
+
+inline size_t findOpener (std::vector<std::shared_ptr<Token>>& tokens, Tok opn, Tok cls, size_t jdx) {
+	unsigned depth = 1;
+	size_t kdx = jdx - 1;
+	while (depth != 0) {
+		const auto type = tokens[kdx]->type();
+		if (type == cls) ++depth;
+		else if (type == opn) --depth;
+		if (kdx == 0) break;
+		--kdx;
+	}
+	return kdx;
+}
+inline size_t findOpener (std::vector<std::shared_ptr<Token>>& tokens, size_t jdx) {
+	unsigned depth = 1;
+	size_t kdx = jdx - 1;
+	while (depth != 0) {
+		const auto type = tokens[kdx]->type();
+		if (isCloser (type)) ++depth;
+		else if (isOpener (type)) --depth;
+		if (kdx == 0) break;
+		--kdx;
+	}
+	return kdx;
+}
+
+inline Tok openerFor(Tok closer_type) {
+	switch (closer_type) {
+		case Tok::CloseBrackets: return Tok::OpenBrackets;
+		case Tok::CloseParenthesis: return Tok::OpenParenthesis;
+		case Tok::CloseCurlyBrackets: return Tok::OpenCurlyBrackets;
+		default: return Tok::Dot;
+	}
 }
 
 #endif // TOKENS_H
