@@ -9,28 +9,28 @@ void lexer_1 (const char path[], std::vector <shp_t>& tokens) {
 	const unsigned buff_size = 200;
 	char buff[buff_size];
 	std::ifstream fin (path);
-	unsigned line_idx = 0;
+	size_t line_idx = 0;
 	bool readyToCloseBody = false, approvedClosingBody = false;
 
-	auto add = [&tokens](Token* t, const unsigned line_idx, const unsigned idx) {
+	auto add = [&tokens](Token* t, const size_t line_idx, const size_t idx) {
 		tokens.push_back (shp_t (t, pass));
 		tokens.back ()->setPos (line_idx, idx);
 	};
-	auto changeBack = [&tokens](Token* t, const unsigned line_idx, const unsigned idx) {
+	auto changeBack = [&tokens](Token* t, const size_t line_idx, const size_t idx) {
 		tokens.back () = shp_t (t, pass);
 		tokens.back ()->setPos (line_idx, idx - 1);
 	};
-	auto tryToSetId = [&tokens](const Tok& prew_t, const unsigned idx, std::wstring& wb) {
+	auto tryToSetId = [&tokens](const Tok& prew_t, const size_t idx, std::wstring& wb) {
 		if (prew_t == Tok::Id) {
 			tokens.back ()->setId (wb.substr (tokens.back()->idx (), idx - tokens.back()->idx ()));
 		}
 	};
-	auto tryToSetNum = [&tokens](const Tok& prew_t, const unsigned idx, std::wstring& wb) {
+	auto tryToSetNum = [&tokens](const Tok& prew_t, const size_t idx, std::wstring& wb) {
 		if (prew_t == Tok::Number) {
 			tokens.back ()->setId (wb.substr (tokens.back()->idx (), idx - tokens.back()->idx ()));
 		}
 	};
-	auto tryToSetParentecis = [&add, &tryToSetId, &tryToSetNum](const wchar_t ch, Tok prew_t, const unsigned line_idx, const unsigned idx, std::wstring& wb)->bool {
+	auto tryToSetParentecis = [&add, &tryToSetId, &tryToSetNum](const wchar_t ch, Tok prew_t, const size_t line_idx, const size_t idx, std::wstring& wb)->bool {
 		if (ch == L'(') {
 			tryToSetId (prew_t, idx, wb);
 			tryToSetNum (prew_t, idx, wb);
@@ -81,7 +81,7 @@ void lexer_1 (const char path[], std::vector <shp_t>& tokens) {
 
 			lines.push_back (wb);
 			
-			for (unsigned idx = 0; idx < wb.length (); ++idx) {
+			for (size_t idx = 0; idx < wb.length (); ++idx) {
 
 				if (!approvedClosingBody) readyToCloseBody = false;
 				approvedClosingBody = false;
@@ -101,7 +101,7 @@ void lexer_1 (const char path[], std::vector <shp_t>& tokens) {
 				if (prew_t != Tok::String) {
 					if (prew_t == Tok::Decrement && ch == L'-') { // комментарии
 						tokens.pop_back ();
-						idx = static_cast<unsigned>(wb.length ());
+						idx = wb.length ();
 						continue;
 					}
 					if (prew_t != Tok::Id) {
@@ -129,7 +129,6 @@ void lexer_1 (const char path[], std::vector <shp_t>& tokens) {
 						tryToSetId (prew_t, idx, wb);
 						tryToSetNum (prew_t, idx, wb);
 						if (!readyToCloseBody) approvedClosingBody = readyToCloseBody = true;
-						else add (new CloseBody_t (),line_idx, idx);
 						add (new Semicolon_t (), line_idx, idx);
 						continue;
 					}
@@ -147,6 +146,7 @@ void lexer_1 (const char path[], std::vector <shp_t>& tokens) {
 						tryToSetId (prew_t, idx, wb);
 						tryToSetNum (prew_t, idx, wb);
 						if (prew_t == Tok::Plus) changeBack (new Increment_t (), line_idx, idx);
+						else if (prew_t == Tok::Minus) changeBack (new Sword_t (), line_idx, idx);
 						else add (new Plus_t (), line_idx, idx);
 						continue;
 					}
@@ -164,6 +164,12 @@ void lexer_1 (const char path[], std::vector <shp_t>& tokens) {
 						add (new Devide_t (), line_idx, idx);
 						continue;
 					}
+					if (ch == L'\\') {
+						tryToSetId (prew_t, idx, wb);
+						tryToSetNum (prew_t, idx, wb);
+						add (new Lambda_t (), line_idx, idx);
+						continue;
+					}
 					if (ch == L'<') {
 						tryToSetId (prew_t, idx, wb);
 						tryToSetNum (prew_t, idx, wb);
@@ -174,6 +180,12 @@ void lexer_1 (const char path[], std::vector <shp_t>& tokens) {
 						tryToSetId (prew_t, idx, wb);
 						tryToSetNum (prew_t, idx, wb);
 						add (new nye_t (), line_idx, idx);
+						continue;
+					}
+					if (ch == L'&' || ch == L'№') {
+						tryToSetId (prew_t, idx, wb);
+						tryToSetNum (prew_t, idx, wb);
+						add (new Reference_t (), line_idx, idx);
 						continue;
 					}
 					if (ch == L'>') {
@@ -195,18 +207,20 @@ void lexer_1 (const char path[], std::vector <shp_t>& tokens) {
 						continue;
 					}
 					if (ch == L' ' || ch == L'\t') {
-						tryToSetId (prew_t, idx, wb);
-						tryToSetNum (prew_t, idx, wb);
-						add(new Space_t(), line_idx, idx);
+						if ( prew_t != Tok::Space) {
+							tryToSetId (prew_t, idx, wb);
+							tryToSetNum (prew_t, idx, wb);
+							add(new Space_t(), line_idx, idx);
+						}
 						if (readyToCloseBody) approvedClosingBody = true;
 					}
 				}
 			}
 
 			auto&& prew_t =tokens.empty () ? Tok::Space : tokens.back ()->type ();
-			tryToSetId (prew_t, static_cast<unsigned>(wb.length ()), wb);
-			tryToSetNum (prew_t, static_cast<unsigned>(wb.length ()), wb);
-			add (new Space_t (), line_idx, static_cast<unsigned>(wb.length ()));
+			tryToSetId (prew_t, wb.length (), wb);
+			tryToSetNum (prew_t, wb.length (), wb);
+			add (new Space_t (), line_idx, wb.length ());
 			if (readyToCloseBody) approvedClosingBody = true;
 		}
 		
