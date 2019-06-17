@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <cassert>
 #include "tokens.h"
 #include "lexer_without_keys.h"
 #include "dLog.h"
