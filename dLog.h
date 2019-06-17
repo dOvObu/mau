@@ -85,7 +85,6 @@ void dlog (T1 a, T... b) {
 	std::cout << "dlog: < ";
 	static_if <(std::is_same<T1, std::wstring>::value)> ([&](auto f) {
 		#ifdef __unix__
-			std::cout << wstos (a);
 		#else
 			std::wcout << a;
 		#endif
