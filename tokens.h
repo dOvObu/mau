@@ -273,6 +273,9 @@ struct Elif_t			: Token {
 };
 struct Else_t			: Token {
 	Tok type () {return Tok::Else;}
+	#ifdef __unix__
+	std::shared_ptr<struct Expr_t> condition{nullptr};
+	#endif
 	std::shared_ptr<Token> body{nullptr}, alternative{nullptr};
 	void run (Runner* v) {v->run(this);}
 };
@@ -288,7 +291,10 @@ struct While_t			: Token {
 	Tok type () {return Tok::While;}
 	void run (Runner* v) {v->run(this);}
 	std::shared_ptr<struct Expr_t> condition{nullptr};
-	std::shared_ptr<Token> body{nullptr};	//, alternative{nullptr};
+	std::shared_ptr<Token> body{nullptr};
+	#ifdef __unix__
+	std::shared_ptr<Token> alternative{nullptr};
+	#endif
 };
 struct Ban_t			: Token { Tok type () {return Tok::Ban;} };
 struct Break_t			: Token { Tok type () {return Tok::Break;} };

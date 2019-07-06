@@ -28,8 +28,8 @@ int main()
 	//SetConsoleCP (1251);
 	//SetConsoleOutputCP (1251);
 
-	loadABC ("ab.txt");
-	loadKeyWords ("kw.txt");
+	loadABC ("../ab.txt");
+	loadKeyWords ("../kw.txt");
 	vector <shp_t> tokens;
 	vector<vector<shp_t>*> lists;
 	lexer_1 ("shit_0.txt", tokens);
@@ -52,7 +52,8 @@ int main()
 			system ("pause");
 			return 1;
 		}
-	} catch (std::string str) {
+	}
+	catch (std::string str) {
 		dlog (str);
 		system ("pause");
 		return 1;
@@ -65,9 +66,9 @@ int main()
 	parser_1 (tokens, lists);
 	std::remove_if (std::begin (lists), std::end (lists), [](auto* t) {return t->empty (); });
 
-	printf ("\n\n\n===----- after parser_1 -----===\n");
+	puts ("\n\n\n===----- after parser_1 -----===");
 	//for (auto& it : lists) printTokens ("\n", *it, "\n");
-	printf ("\n\n");
+	puts ("\n");
 
 	// Добавление if, if-else, if-elif, if-elif-else, while, for statements
 	// and lambda definitions
@@ -75,9 +76,9 @@ int main()
 	std::remove_if (std::begin (lists), std::end (lists), [](auto* t) {return t->empty (); });
 
 
-	printf ("\n\n\n===----- after parser_3 -----===\n");
+	puts ("\n\n\n===----- after parser_3 -----===");
 	//for (auto& it : lists) printTokens ("\n", *it, "\n");
-	printf ("\n\n");
+	puts ("\n");
 
 	// Добавление бинарных операторов
 	////                                      parser_2 (lists);
@@ -88,8 +89,9 @@ int main()
 	//analysis_1 (tokens); // вывод типов и генерация функций на основе шаблонов
 
 	//parse_to_tree(,)
-
+	#ifndef __unix__
 	system ("pause");
+	#endif\
 
 	//SetConsoleCP (866);
 	//SetConsoleOutputCP (866);

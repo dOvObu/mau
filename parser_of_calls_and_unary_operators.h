@@ -6,6 +6,9 @@
 #include <set>
 
 void parser_1 (std::vector <std::shared_ptr<Token> >& tokens, std::vector<std::vector<std::shared_ptr<Token> >*>& lists);
+bool isCloser(Tok type);
+Tok openerFor(Tok type);
+size_t findOpener(std::vector<std::shared_ptr<Token> >&, Tok, Tok, size_t);
 
 template<typename T>
 void reduceDotOpIfPossible (
@@ -20,7 +23,7 @@ void reduceDotOpIfPossible (
 		while (tokens[lshift]->type () == Tok::Space) { if (lshift == 0) return; --lshift; } // нашли скобку, либо id-шник слева
 		if (tokens[lshift]->type () == Tok::OpenBody || tokens[lshift]->type () == Tok::OpenBodyOfLambda) return; // какая-то странная точка (может из класса, а может из лямбды)
 
-		auto type = tokens[rshift]->type ();
+		Tok type = tokens[rshift]->type ();
 		if (trigger.count (type) > 0) { // если справа от скобки id,
 			type = tokens[lshift]->type (); // а слева, закрывающаяся скобка
 			if (isCloser (type)) {

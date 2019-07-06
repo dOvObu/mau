@@ -40,14 +40,14 @@ namespace static_if_detail {
 
 } //end of namespace static_if_detail
 
-
-
 template<bool Cond, typename F>
 static_if_detail::statement<Cond> static_if (F const& f) {
 	static_if_detail::statement<Cond> if_;
 	if_.then (f);
 	return if_;
 }
+
+#ifndef __unix__
 
 template <typename T1>
 void __dlog (T1 a) {
@@ -91,6 +91,12 @@ void dlog (T1 a, T... b) {
 		std::cout << " >" << std::endl;
 	});
 }
+#else // ifndef __unix__
 
+template <typename T1, typename... T>
+void dlog (T1 a, T... b) {
+}
+
+#endif // ifndef __unix__
 
 #endif // DLOG_H
