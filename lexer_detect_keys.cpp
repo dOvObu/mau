@@ -169,8 +169,10 @@ int change (std::vector<shp_t>& tokens, size_t& idx, Tok t)
 	return res;
 }
 
+inline bool isOpener (Tok type){ return type == Tok::OpenParenthesis || type == Tok::OpenBrackets || type == Tok::OpenCurlyBrackets; }
+inline bool isCloser (Tok type){ return type == Tok::CloseParenthesis || type == Tok::CloseBrackets || type == Tok::CloseCurlyBrackets; }
 
-size_t lexer_detect_keys_findCloser (std::vector<shp_t>& tokens, size_t jdx) {
+size_t findCloser (std::vector<shp_t>& tokens, size_t jdx) {
 	const auto size = tokens.size ();
 	unsigned depth = 1;
 	size_t kdx = jdx + 1;
@@ -357,7 +359,7 @@ bool lexer_2 (std::vector<std::shared_ptr<Token> >& tokens)
 				while (jdx < size && tokens[jdx]->type () == Tok::Space) ++jdx;
 				if (jdx == size) throw "Error! There is must to be '(' token after type template token";
 				if (tokens[jdx]->type () == Tok::OpenParenthesis) {
-					size_t kdx = lexer_detect_keys_findCloser (tokens, jdx) - 1;
+					size_t kdx = findCloser (tokens, jdx) - 1;
 					if (kdx == tokens.size ()) throw "Error! There is must to be ')' token to close template arguments";
 					tokens[jdx] = shp_t (new OpenTemplateType_t ());
 					tokens[kdx] = shp_t (new CloseTemplateType_t ());
@@ -402,7 +404,7 @@ bool lexer_2 (std::vector<std::shared_ptr<Token> >& tokens)
 					throw "Error! There is must to be '(' token after type lambda token";
 				
 				size_t local_depth = 1;
-				auto kdx = lexer_detect_keys_findCloser (tokens, jdx) - 1;
+				auto kdx = findCloser (tokens, jdx) - 1;
 
 				// [idx]->\ [jdx]->( ... )<-[kdx]
 				tokens[jdx] = shp_t (new OpenLambdaType_t ());

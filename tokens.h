@@ -1,10 +1,12 @@
 #ifndef TOKENS_H
 #define TOKENS_H
+
 #include <string>
 #include <iostream>
 #include <vector>
 #include <memory>
 #include <map>
+
 
 #include "cirstr.h"
 
@@ -271,7 +273,6 @@ struct Elif_t			: Token {
 };
 struct Else_t			: Token {
 	Tok type () {return Tok::Else;}
-	std::shared_ptr<Token> condition{nullptr};
 	std::shared_ptr<Token> body{nullptr}, alternative{nullptr};
 	void run (Runner* v) {v->run(this);}
 };
@@ -281,16 +282,11 @@ struct Throw_t			: Token { Tok type () {return Tok::Throw;} };
 struct Try_t			: Token { Tok type () {return Tok::Try;} };
 struct Catch_t			: Token { Tok type () {return Tok::Catch;} };
 struct ForKey_t : Token { Tok type () { return Tok::ForKey; } };
-struct For_t			: Token {
-	Tok type () {return Tok::For;}
-	std::shared_ptr<Id_t> iter{nullptr}, idx{nullptr};
-	std::shared_ptr<Token> body{nullptr}, range{nullptr};
-};
+struct For_t			: Token { Tok type () {return Tok::For;} };
 struct WhileKey_t : Token { Tok type () { return Tok::WhileKey; } };
 struct While_t			: Token {
 	Tok type () {return Tok::While;}
 	void run (Runner* v) {v->run(this);}
-	bool alternative;
 	std::shared_ptr<struct Expr_t> condition{nullptr};
 	std::shared_ptr<Token> body{nullptr};	//, alternative{nullptr};
 };
@@ -330,13 +326,12 @@ private:
 
 
 struct String_t						: Token {
-	Tok type () {return Tok::String;}
-	void setId (const std::wstring& str) {this->str = str;}
-	std::wstring getId () {return str;}
-	void run (Runner* v) {v->run (this);}
-
+				Tok type () {return Tok::String;}
+				void setId (const std::wstring& str){this->str = str;}
+				std::wstring getId () {return str;}
+				void run (Runner* v) { v->run (this); }
 private:
-	std::wstring str;
+				std::wstring str;
 };
 
 
@@ -518,19 +513,187 @@ struct Spy : Runner {
 	~Spy () = default;
 };
 
+
+struct ShowTree : Runner {
+
+	//std::vector<sf::Vector2i> nodes;
+	//sf::Vector2i cur; // текущая позиция
+	ShowTree () {}
+	void run (UInt_t* t) override {  }
+	void run (Int_t* t) override {
+		//std::cout << "[i" << t->getInt () << "]";
+	}
+	void run (Float_t* t) override {
+		//std::cout << "[f" << t->getFloat () << "]";
+	}
+	void run (String_t* t) override {
+		//std::wcout << L"[s'" << t->getId () << L"']";
+	}
+	void run (Expr_t* t) override {
+		for (auto& it : *(t->l.get ())) {
+			it->run (this);
+		}
+	}
+	/*
+	void run (Call_t* t) override {
+		cur.x += 10;
+		cur.y += 10;
+		nodes.push_back (cur);
+		bool tr = true;
+		std::wcout << "call: " << t->id->getId () << std::endl;
+		//std::wcout << "[Call " << t->id->getId () << '(';
+		for (auto& it : t->args) {
+			if (tr) {
+				tr = false;
+			}
+			else {
+				//std::cout << ", ";
+			}
+			it->run (this);
+		}
+		//std::cout << ")]";
+		cur.x -= 10;
+	}*/
+	void run (binop_t* t) {
+		t->left->run (this);
+		/*switch (t->opType) {
+		case Tok::Plus: std::cout << '+'; break;
+		case Tok::Minus: std::cout << '-'; break;
+		case Tok::Devide: std::cout << '/'; break;
+		case Tok::Multiply: std::cout << '*'; break;
+		case Tok::Equal: std::cout << "=="; break;
+		default: break;
+		}*/
+		t->right->run (this);
+	}
+	void run (Id_t* t) override {
+		//std::wcout << "[Id: " << t->getId () << "]";
+	}
+	void run (ArrayDef_t* t) override {
+		bool tr = false;
+		//std::cout << "[m";
+		for (auto& it : t->cells) {
+			if (tr) {
+				//std::cout << ", ";
+			}
+			else { tr = true; }
+			it.run (this);
+		}
+		//std::cout << "]";
+	}
+	void run (OpenParenthesis_t* t) override {
+		//std::cout << " (:";
+	}
+	void run (CloseParenthesis_t* t) override {
+		//std::cout << ":) ";
+	}
+	void run (Space_t* t) override {
+		//std::cout << "_";
+	}
+	void run (Dot_t* t) override {
+		//std::cout << ".";
+	}
+	void run (Lambda_t* t) override {
+		//std::cout << "\\";
+	}
+	void run (Semicolon_t* t) override {
+		//std::cout << "|";
+	}
+	void run (Colon_t* t) override {
+		//std::cout << "is";
+	}
+	void run (DoubleColon_t* t) override {
+		//std::cout << "::";
+	}
+	void run (OpenBody_t* t) override {
+		//std::cout << " {:";
+	}
+	void run (OpenBodyOfLambda_t* t) override {
+		//std::cout << " {:";
+	}
+	void run (CloseBody_t* t) override {
+		//std::cout << ":} ";
+	}
+	void run (LambdaDef_t* t) override {
+		//std::cout << "[lambda" << t->args.size () << "(";
+		for (auto& it : t->args) it.second->run (this);
+		//std::cout << "):";
+		t->body->run (this);
+		//std::cout << "]";
+	}
+	void run (StartType_t* t) override {
+		//std::cout << "type:";
+	}
+	void run (Int_type_t* t) override {
+		//std::cout << "[int_t]";
+	}
+	void run (EndType_t* t) override {
+		//std::cout << ":endType";
+	}
+	void run (If_t* t) override {
+		//std::cout << " IF ";
+	}
+	void run (InCall_is_t* t) override {
+		//std::wcout << t->id->getId () << L":";
+		t->expr->run (this);
+	}
+	void run (Else_t* t) override {
+		//std::cout << " ELSE ";
+	}
+	void run (Elif_t* t) override {
+		//std::cout << " ELIF ";
+	}
+	void run (While_t* t) override {
+		//std::cout << " WHILE ";
+	}
+	void run (Assign_t* t) override {
+		//std::cout << "=";
+	}
+	/*
+	void show (Token* t, const int width, const int height, const char name[]) {
+
+		sf::RenderWindow window (sf::VideoMode (width, height), name);
+		this->nodes.push_back (cur = {0, 0});
+		t->run (this); // инициализировали отображение узлов и рёбер
+		sf::View v;
+		v.setCenter (static_cast<float> (width) * 0.5f, static_cast<float> (height) * 0.5f);
+		v.setSize (width, height);
+		sf::RectangleShape sh;
+		sh.setFillColor (sf::Color::Black);
+		sh.setSize ({5, 5});
+		const float vel = 0.25;
+		while (window.isOpen ()) {
+			sf::Event ev;
+			while (window.pollEvent (ev)) {
+				if (ev.type == sf::Event::Closed || sf::Keyboard::isKeyPressed (sf::Keyboard::Q))
+					window.close ();
+			}
+			if (sf::Keyboard::isKeyPressed (sf::Keyboard::A)) v.move (-vel, 0);
+			if (sf::Keyboard::isKeyPressed (sf::Keyboard::D)) v.move (vel, 0);
+			if (sf::Keyboard::isKeyPressed (sf::Keyboard::W)) v.move (0, -vel);
+			if (sf::Keyboard::isKeyPressed (sf::Keyboard::S)) v.move (0, vel);
+
+			window.setView (v);
+			window.clear (sf::Color::White);
+			// отрисовали отображение узлов и рёбер
+			for (auto& it : nodes) {
+				sh.setPosition (it.x, it.y);
+				window.draw (sh);
+			}
+			window.display ();
+		}
+	}
+	*/
+	~ShowTree () = default;
+};
+
+
 struct Spy2 : Runner {
 	Spy2 () {}
 	void run (UInt_t* t) override {  }
 	void run (Int_t* t) override { std::cout << "[i" << t->getInt () << "]"; }
 	void run (Float_t* t) override { std::cout << "[f" << t->getFloat () << "]"; }
-	void run (String_t* t) override {
-		std::wcout << L"[s'"
-		#ifdef __unix__
-			; std::cout << wstos(t->getId()) << "']" << std::endl;
-		#else
-			<< t->getId () << L"']";
-		#endif
-	}
+	void run (String_t* t) override { std::wcout << L"[s'" << t->getId () << L"']"; }
 	void run (Expr_t* t) override {
 		for (auto& it : *(t->l.get())) {it->run (this);}
 	}
@@ -632,71 +795,6 @@ inline void printTokens (const char str[], std::vector<std::shared_ptr<Token> >&
 	printf (str);
 	printTokens_ (tokens);
 	printf (str2);
-}
-
-inline bool isCloser (Tok type){
-	return type == Tok::CloseParenthesis || type == Tok::CloseBrackets || type == Tok::CloseCurlyBrackets;
-}
-
-inline bool isOpener (Tok type){
-	return type == Tok::OpenParenthesis || type == Tok::OpenBrackets || type == Tok::OpenCurlyBrackets;
-}
-
-inline size_t findCloser (std::vector<std::shared_ptr<Token>>& tokens, Tok opn, Tok cls, size_t jdx) {
-	const auto size = tokens.size();
-	unsigned depth = 1;
-	size_t kdx = jdx + 1;
-	for(;depth != 0 && kdx < size; ++kdx) {
-		const auto type = tokens[kdx]->type();
-		if (type == opn) ++depth;
-		else if (type == cls) --depth;
-	}
-	return kdx;
-}
-inline size_t findCloser_ (std::vector<std::shared_ptr<Token>>& tokens, size_t jdx) {
-	const auto size = tokens.size();
-	unsigned depth = 1;
-	size_t kdx = jdx + 1;
-	for(;depth != 0 && kdx < size; ++kdx) {
-		const auto type = tokens[kdx]->type();
-		if (isOpener (type)) ++depth;
-		else if (isCloser (type)) --depth;
-	}
-	return kdx;
-}
-
-inline size_t findOpener (std::vector<std::shared_ptr<Token>>& tokens, Tok opn, Tok cls, size_t jdx) {
-	unsigned depth = 1;
-	size_t kdx = jdx - 1;
-	while (depth != 0) {
-		const auto type = tokens[kdx]->type();
-		if (type == cls) ++depth;
-		else if (type == opn) --depth;
-		if (kdx == 0) break;
-		--kdx;
-	}
-	return kdx;
-}
-inline size_t findOpener (std::vector<std::shared_ptr<Token>>& tokens, size_t jdx) {
-	unsigned depth = 1;
-	size_t kdx = jdx - 1;
-	while (depth != 0) {
-		const auto type = tokens[kdx]->type();
-		if (isCloser (type)) ++depth;
-		else if (isOpener (type)) --depth;
-		if (kdx == 0) break;
-		--kdx;
-	}
-	return kdx;
-}
-
-inline Tok openerFor(Tok closer_type) {
-	switch (closer_type) {
-		case Tok::CloseBrackets: return Tok::OpenBrackets;
-		case Tok::CloseParenthesis: return Tok::OpenParenthesis;
-		case Tok::CloseCurlyBrackets: return Tok::OpenCurlyBrackets;
-		default: return Tok::Dot;
-	}
 }
 
 #endif // TOKENS_H

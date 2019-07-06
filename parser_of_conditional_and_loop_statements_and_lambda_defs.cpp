@@ -33,8 +33,50 @@ void parser_3 (std::vector<std::vector<std::shared_ptr<Token> >*>& lists) {
 	// for (auto& tokens : lists) { printf ("\n\n\n"); printTokens (*tokens); printf ("\n\n\n"); }
 }
 
+inline bool isOpener (Tok type) {return type == Tok::OpenParenthesis || type == Tok::OpenBrackets || type == Tok::OpenCurlyBrackets;}
+inline bool isCloser (Tok type) {return type == Tok::CloseParenthesis || type == Tok::CloseBrackets || type == Tok::CloseCurlyBrackets;}
 inline bool isOpenerUnsave (Tok type) {return type == Tok::OpenBody || isOpener (type);}
 inline bool isCloserUnsave (Tok type) {return type == Tok::CloseBody || isCloser (type);}
+
+/*
+void packArguments(
+	LambdaDef_t* p_lambda,
+	vec_shp_t& la_args,
+	std::vector<vec_shp_t*>& types)
+{
+	// Упаковка id аргументов и их типов
+	// к примеру:
+	// ля (целое - аргк) (кортеж[строка] - аргв)
+	bool its_type = false;
+	Expr_t* p_currType{nullptr};
+	shp_t currentType;
+	for (unsigned mdx = 0, depth = 0, start_type = 0, end_type = 0; mdx < la_args.size (); ++mdx) {
+		Tok type = la_args[mdx]->type ();
+		if (depth > 0) { // мы в скобках
+			if (its_type) {
+				// если мы в скобках, то всё, до знака минус -- тип
+				if (type == Tok::Minus || type == Tok::UnMinus || type == Tok::Decrement) {
+					currentType.reset(p_currType = new Expr_t ());
+					p_currType->l.reset (new std::vector<shp_t>(std::begin(la_args) + start_type, std::begin(la_args) + mdx));
+					types.push_back (p_currType->l.get ());
+					its_type = false;
+				}
+			} else {
+				if (type == Tok::Id) { // всё, после знака минус -- id-шники переменных
+					p_lambda->args.push_back({currentType, la_args[mdx]});
+				}
+			}
+		} else if (type == Tok::Id) { // если не в скобках наткнулись на id
+			p_lambda->args.push_back({nullptr, la_args[mdx]}); // по умолчанию -- автотип
+			continue;
+		}
+		if (type == Tok::Space) continue;
+		if (isOpener(type)) {++depth; its_type = true; start_type = mdx + 1; continue;}
+		if (isCloser(type)) {--depth; continue;}
+	}
+}
+*/
+
 
 void packArguments (
 	LambdaDef_t* p_lambda,
@@ -106,58 +148,6 @@ void packArguments (
 	//*/
 	//dlog ("done");
 }
-
-
-void reduceForLoopWithBody (
-	vec_shp_t& tokens,
-	size_t idx,
-	size_t ldx,
-	size_t jdx,
-	size_t kdx)
-{
-    // [idx]->['при'или'инапри'] ... [jdx]->'{'...[kdx]->'} ELSE' {0}
-    // или              -----------||-----------  [kdx]->'} ELIF' {1}
-    // или              -----------||-----------    ';)'<-[kdx]   {2}
-    // или              -----------||-----------    ';;'<-[kdx]   {3}
-    //std::cout << "one\n";
-	For_t* p_for;
-	tokens[idx].reset (p_for = new For_t ());
-    Tok type = tokens[kdx]->type ();
-	{// записали название итератора и индекса
-		bool first = true;
-		for (size_t i = idx; i < ldx; ++i) {
-			if (tokens[i]->type() == Tok::Id) {
-				if (first) {
-					p_for->iter = as<Id_t>(tokens[i]);
-					first = false;
-				} else {
-					p_for->idx = as<Id_t>(tokens[i]);
-					break;
-				}
-			}
-		}
-	}
-	// записали источник ряда
-    Expr_t* p_expr;
-	p_for->range.reset(p_expr = new Expr_t());
-	p_expr -> l.reset (
-		new std::vector<std::shared_ptr<Token> > (
-			std::begin(tokens) + ldx + 1,
-			std::begin(tokens) + jdx));
-	
-	// записали тело
-    p_for -> body.reset (p_expr = new Expr_t ());
-    p_expr -> l.reset (
-        new std::vector<std::shared_ptr<Token> > (
-			std::begin(tokens) + jdx + 1,
-			std::begin(tokens) + kdx)
-    );
-	// удалили всё, оставив сокращённый For_t в idx
-    tokens.erase (
-		std::begin(tokens) + idx + 1,
-		std::begin(tokens) + kdx + 1);
-}
-
 
 void reduce_body_of_lambdas_conditions_and_loops (
 	vec_shp_t& tokens,
@@ -244,6 +234,7 @@ void reduce_body_of_lambdas_conditions_and_loops (
 				// или -----------||-----------  [?]->'} ELSE'
 				// или -----------||-----------  [?]->'} ELIF'
 				// Поиск конца тела
+				//dlog ("if");
 				auto kdx = jdx + 1;
 				while (tokens_size > kdx && tokens[kdx]->type () == Tok::Space) ++kdx;
 				// тут условие с пустым телом, если первый элементв теле (при х==1 {: ->;) или (при х==0 {: ->);
@@ -287,37 +278,8 @@ void reduce_body_of_lambdas_conditions_and_loops (
 			
 			else if (type == Tok::ForKey) {
 				// TODO: Распознать конец тела
-				// [idx]->'для' 'x_id' 'i_id' [?]->'in some_range' [jdx]->'{' ... ';;'<-[?]
-				size_t ldx = idx + 1;
-				while (ldx < jdx && tokens[ldx]->type() != Tok::In) ++ldx;
-				// [idx]->'для' ... [ldx]->'in some_range' [jdx]->'{' ... ';;'<-[?]
-				
-				auto kdx = jdx+1;
-				while (tokens_size > kdx && tokens[kdx]->type () == Tok::Space) ++kdx;
-				// тут условие с пустым телом, если первый элементв теле (при х==1 {: ->;) или (при х==0 {: ->);
-				bool emptyBody = true;
+				// [idx]->'для' 'id' ',id'? [?]->':'... [jdx]->'{' ... ';;'<-[?]
 
-				Tok type = tokens[kdx]->type ();
-				int closerType = 0;
-				if (tokens_size > kdx && type != Tok::Semicolon && !isCloser (type)) { // если тело оказалось не пустым
-					emptyBody = false;
-					depth = 0;
-					Tok prew_type = Tok::OpenBodyOfLambda;
-					while (kdx < tokens_size) {
-						Tok type = tokens[kdx] -> type ();
-						if (isOpener(type)) ++depth;
-						else if (isCloser (type)) {if (depth != 0) --depth; else break;}
-						// если мы на своей глубине встретили закрытие тела, либо две ';' подряд, то мы нашли тело
-						if (depth == 0) {
-							if (type == Tok::CloseBody) break;
-							if (type == Tok::Semicolon && prew_type == Tok::Semicolon) {--kdx; break;}
-						}
-						if (type != Tok::Space) prew_type = type; // ';' ~whitespace~ ';' -- допустимо такое завершение тела
-						++kdx;
-					}
-				}
-				// [idx]->'для' 'id' 'id' [ldx]->'in some_range' [jdx]->'{' ... ';;'<-[?]
-				reduceForLoopWithBody (tokens, idx, ldx, jdx, kdx);
 			}
 		}
 

@@ -58,45 +58,35 @@ void __dlog (T1 a) {
 	});
 }
 
-#ifdef __unix__
-#else
-	template<typename T1, typename... T>
-	void __dlog (T1 a, T ...b) {
+template<typename T1, typename... T>
+void __dlog (T1 a, T ...b) {
 
-		std::cout << ", ";
-		static_if <(std::is_same<T1, std::wstring>::value)> ([&](auto f) {
-			std::wcout << a;
-		}).else_ ([&](auto f) {
-			std::cout << a;
-		});
+	std::cout << ", ";
+	static_if <(std::is_same<T1, std::wstring>::value)> ([&](auto f) {
+		std::wcout << a;
+	}).else_ ([&](auto f) {
+		std::cout << a;
+	});
 
-		static_if <(sizeof...(b) > 0)> ([&](auto f) {
-			__dlog (b...);
-		}).else_ ([&](auto f) {
-			std::cout << " >" << std::endl;
-		});
+	static_if <(sizeof...(b) > 0)> ([&](auto f) {
+		__dlog (b...);
+	}).else_ ([&](auto f) {
+		std::cout << " >" << std::endl;
+	});
 }
-#endif
-
 
 template <typename T1, typename... T>
 void dlog (T1 a, T... b) {
 
 	std::cout << "dlog: < ";
 	static_if <(std::is_same<T1, std::wstring>::value)> ([&](auto f) {
-		#ifdef __unix__
-		#else
-			std::wcout << a;
-		#endif
+		std::wcout << a;
 	}).else_ ([&](auto f) {
 		std::cout << a;
 	});
 
 	static_if <(sizeof...(b) > 0)> ([&](auto f) {
-		#ifdef __unix__
-		#else
-			__dlog (b...);
-		#endif
+		__dlog (b...);
 	}).else_ ([&](auto f) {
 		std::cout << " >" << std::endl;
 	});

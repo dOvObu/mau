@@ -167,7 +167,9 @@ void lexer_1 (const char path[], std::vector <shp_t>& tokens) {
 					if (ch == L'\\') {
 						tryToSetId (prew_t, idx, wb);
 						tryToSetNum (prew_t, idx, wb);
+						//if (prew_t == Tok::Devide) changeBack (new Power_t (), line_idx, idx); else
 						add (new Lambda_t (), line_idx, idx);
+						std::cout << "test" << std::endl;
 						continue;
 					}
 					if (ch == L'<') {
