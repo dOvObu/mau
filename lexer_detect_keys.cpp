@@ -29,53 +29,72 @@ bool loadKeyWords (const char path[])
 {
 	using namespace lexer_detect_keys_private;
 	bool res = true;
-	enum ord {first, second} order{ord::first};
+	enum Ord {FIRST, SECOND} order{Ord::FIRST};
 	std::vector <std::shared_ptr<Token> > keyWords_toks;
 	std::shared_ptr<Token> p{nullptr};
 	lexer_1 (path, keyWords_toks);
 
-	std::vector<Tok> vals {
-		Tok::Lambda,
-		Tok::If,
-		Tok::Else,
-		Tok::Elif,
-		Tok::Try,
-		Tok::Catch,
-		Tok::For,
-		Tok::While,
-		Tok::Return,
-		Tok::Assert,
-		Tok::Class,
-		Tok::Throw,
-		Tok::And,
-		Tok::Or,
-		Tok::Not,
-		Tok::Break,
-		Tok::Const,
-		Tok::Import,
-		Tok::As,
-		Tok::Empty,
-		Tok::Delete,
-		Tok::Continue,
-		Tok::Int_type,
-		Tok::UInt_type,
-		Tok::Float_type
+	std::map<std::string ,Tok> vals {
+		{"lambda", Tok::Lambda},
+		{"if", Tok::If},
+		{"else", Tok::Else},
+		{"elif", Tok::Elif},
+		{"try", Tok::Try},
+		{"catch", Tok::Catch},
+		{"for", Tok::For},
+		{"while", Tok::While},
+		{"return", Tok::Return},
+		{"assert", Tok::Assert},
+		{"let", Tok::Let},
+		{"throw", Tok::Throw},
+		{"and", Tok::And},
+		{"or", Tok::Or},
+		{"not", Tok::Not},
+		{"break", Tok::Break},
+		{"const", Tok::Const},
+		{"import", Tok::Import},
+		{"as", Tok::As},
+		{"delete", Tok::Delete},
+		{"continue", Tok::Continue},
+		{"i16", Tok::I16_type},
+		{"i32", Tok::I32_type},
+		{"i64", Tok::I64_type},
+		{"u16", Tok::U16_type},
+		{"u32", Tok::U32_type},
+		{"u64", Tok::U64_type},
+		{"f32", Tok::F32_type},
+		{"f64", Tok::F64_type},
+		{"string", Tok::String_type},
+		{"array", Tok::Array_type},
+		{"map", Tok::Map_type},
+		{"vector", Tok::Vector_type},
+		{"atomic", Tok::Atomic_type},
+		{"shared_ptr", Tok::SharedPtr_type},
+		{"template", Tok::TemplateKey},
+		{"typename", Tok::Typename}
 	};
 
 	size_t idx = 0;
 	std::string buff = "";
 	for (auto it : keyWords_toks) {
-		if (it->type () == Tok::Id) {
-
-			if (order == ord::first) {
+		auto type = it->type ();
+		if (type == Tok::Space) continue;
+		if (type == Tok::Id) {
+			if (order == Ord::FIRST) {
 				buff = as<Id_t> (it)->getStr ();
+				//std::wcout << as<Id_t> (it)->getId () << std::endl;
 				p = it;
-				order = ord::second;
+				order = Ord::SECOND;
 			} else {
-				keyWords[buff] = vals[idx];
-				order = ord::first;
+				puts (("puts ( " + buff + " )").c_str ());
+				keyWords[as<Id_t> (it)->getStr ()] = vals[buff];
+				order = Ord::FIRST;
 				++idx;
 			}
+		}
+		else {
+			if (type == Tok::Space) puts ("    space");
+			else if (type == Tok::ForKey) puts ("     forKey");
 		}
 	}
 
@@ -148,7 +167,7 @@ int change (std::vector<shp_t>& tokens, size_t& idx, Tok t)
 
 	case Tok::Return:		{ tokens[idx] = shp_t (new Return_t ());	break; }
 	case Tok::Assert:		{ tokens[idx] = shp_t (new Assert_t ());	break; }
-	case Tok::Class:		{ tokens[idx] = shp_t (new Class_t ());		break; }
+	case Tok::Let:			{ tokens[idx] = shp_t (new Let_t ());		break; }
 	case Tok::Throw:		{ tokens[idx] = shp_t (new Throw_t ());		break; }
 	case Tok::And:			{ tokens[idx] = shp_t (new And_t ());		break; }
 	case Tok::Or:			{ tokens[idx] = shp_t (new Or_t ());		break; }
@@ -159,10 +178,16 @@ int change (std::vector<shp_t>& tokens, size_t& idx, Tok t)
 	case Tok::As:			{ tokens[idx] = shp_t (new As_t ());		break; }
 	case Tok::Empty:		{ tokens[idx] = shp_t (new Empty_t ());		break; }
 	case Tok::Delete:		{ tokens[idx] = shp_t (new Delete_t ());	break; }
-	case Tok::Continue:		{ tokens[idx] = shp_t (new Continue_t ());	break; }
-	case Tok::Int_type:		{ tokens[idx] = shp_t (new Int_type_t ());	break; }
-	case Tok::UInt_type:	{ tokens[idx] = shp_t (new UInt_type_t ());	break; }
-	case Tok::Float_type:	{ tokens[idx] = shp_t (new Float_type_t ());break; }
+	case Tok::Continue:		{ tokens[idx] = shp_t (new Continue_t ());  break; }
+	case Tok::I16_type: { tokens[idx] = shp_t (new I16_type_t ()); break; }
+	case Tok::I32_type:	{ tokens[idx] = shp_t (new I32_type_t ());	break; }
+	case Tok::U32_type:	{ tokens[idx] = shp_t (new U32_type_t ());	break; }
+	case Tok::F64_type:	{ tokens[idx] = shp_t (new F64_type_t ());break; }
+	case Tok::Typename: { tokens[idx] = shp_t (new Typename_t ()); break; }
+	case Tok::SharedPtr_type: { tokens[idx] = shp_t (new SharedPtr_type_t ()); break; }
+	case Tok::UniquePtr_type: { tokens[idx] = shp_t (new UniquePtr_type_t ()); break; }
+	case Tok::Atomic_type: { tokens[idx] = shp_t (new Atomic_type_t ()); break; }
+	case Tok::String_type: { tokens[idx] = shp_t (new String_type_t ()); break; }
 	//case Tok::Ban	{tokens[idx] = shp_t(new Ban_t());				break;}
 	default: break;
 	}

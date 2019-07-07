@@ -28,8 +28,8 @@ int main()
 	//SetConsoleCP (1251);
 	//SetConsoleOutputCP (1251);
 
-	loadABC ("../ab.txt");
-	loadKeyWords ("../kw.txt");
+	loadABC ("ab.txt");
+	loadKeyWords ("kw.txt");
 	vector <shp_t> tokens;
 	vector<vector<shp_t>*> lists;
 	lexer_1 ("shit_0.txt", tokens);
@@ -77,7 +77,7 @@ int main()
 
 
 	puts ("\n\n\n===----- after parser_3 -----===");
-	//for (auto& it : lists) printTokens ("\n", *it, "\n");
+	for (auto& it : lists) printTokens ("\n", *it, "\n");
 	puts ("\n");
 
 	// Добавление бинарных операторов

@@ -52,7 +52,7 @@ enum class Tok {
 	ElseKey,			// иначе
 	ElifKey,			// инапри
 	Assert,			// утв
-	Class,			// пусть
+	Let,			// пусть
 	Throw,			// кинь
 	Try,				// пробуй
 	Catch,			// лови
@@ -72,13 +72,19 @@ enum class Tok {
 	Comma,			// ,
 	String,			// "_
 	EndString,	// _"
+	String_type, // строка
 	Number,			// 42.0
 	Int,				// -42
-	Int_type,		// целое
+	I16_type,
+	I32_type,		// целое
+	I64_type,
 	UInt,				// 42
-	UInt_type,	// натуральное
+	U16_type,
+	U32_type,	// натуральное
+	U64_type,
 	Float,			// 3.1415926535898
-	Float_type,	// вещественное
+	F32_type,
+	F64_type,	// вещественное
 	OpenParenthesis,	// (
 	CloseParenthesis,	// )
 	OpenBrackets,			// [
@@ -133,9 +139,17 @@ enum class Tok {
 	AssignOp,
 	ArrayDef,
 	ArrayCall,
+	Array_type,
 	FieldCall,
 	TypeFieldCall,
 	FieldDef,
+	Map_type,
+	Vector_type,
+	Atomic_type,
+	SharedPtr_type,
+	UniquePtr_type,
+	TemplateKey,
+	Typename,
 	Stmt,
 	Expr,
 	startRep,
@@ -177,7 +191,32 @@ struct Runner {
 	virtual void run (struct InCall_is_t* t) = 0;
 	virtual void run (struct StartType_t* t) = 0;
 	virtual void run (struct EndType_t* t) = 0;
-	virtual void run (struct Int_type_t* t) = 0;
+	virtual void run (struct I16_type_t* t) = 0;
+	virtual void run (struct I32_type_t* t) = 0;
+	virtual void run (struct I64_type_t* t) = 0;
+	virtual void run (struct U16_type_t* t) = 0;
+	virtual void run (struct U32_type_t* t) = 0;
+	virtual void run (struct U64_type_t* t) = 0;
+	virtual void run (struct F32_type_t* t) = 0;
+	virtual void run (struct F64_type_t* t) = 0;
+	virtual void run (struct String_type_t* t) = 0;
+	virtual void run (struct Array_type_t* t) = 0;
+	virtual void run (struct Map_type_t* t) = 0;
+	virtual void run (struct Atomic_type_t* t) = 0;
+	virtual void run (struct Vector_type_t* t) = 0;
+	virtual void run (struct SharedPtr_type_t* t) = 0;
+	virtual void run (struct UniquePtr_type_t* t) = 0;
+	virtual void run (struct TemplateKey_t* t) = 0;
+	virtual void run (struct Typename_t* t) = 0;
+	/*
+	struct TemplateKey_t : Token { Tok type () { return Tok::TemplateKey; } void run (Runner* v) { v->run (this); } };
+	struct Array_type_t : Token { Tok type () { return Tok::Array_type; } void run (Runner* v) { v->run (this); } };
+	struct Map_type_t : Token { Tok type () { return Tok::Map_type; } void run (Runner* v) { v->run (this); } };
+	struct Atomic_type_t : Token { Tok type () { return Tok::Atomic_type; } void run (Runner* v) { v->run (this); } };
+	struct SharedPtr_type_t : Token { Tok type () { return Tok::SharedPtr_type; } void run (Runner* v) { v->run (this); } };
+	struct UniquePtr_type_t : Token { Tok type () { return Tok::UniquePtr_type; } void run (Runner* v) { v->run (this); } };
+	struct Typename_t : Token { Tok type () { return Tok::Typename; } void run (Runner* v) { v->run (this); } };
+	*/
 	virtual void run (struct Sword_t* t) = 0;
 	virtual void run (struct Arrow_t* t) = 0;
 	virtual void run (struct TemplateCall_t* t) = 0;
@@ -280,7 +319,7 @@ struct Else_t			: Token {
 	void run (Runner* v) {v->run(this);}
 };
 struct Assert_t			: Token { Tok type () {return Tok::Assert;} };
-struct Class_t			: Token { Tok type () {return Tok::Class;} };
+struct Let_t			: Token { Tok type () {return Tok::Let;} };
 struct Throw_t			: Token { Tok type () {return Tok::Throw;} };
 struct Try_t			: Token { Tok type () {return Tok::Try;} };
 struct Catch_t			: Token { Tok type () {return Tok::Catch;} };
@@ -386,9 +425,23 @@ struct ArrayDef_t							: Token {
 	void run (Runner* v) { v->run (this); }
 };
 
-struct Int_type_t : Token { Tok type () { return Tok::Int_type; } void run (Runner* v) { v->run (this); } };
-struct UInt_type_t				: Token { Tok type () {return Tok::UInt_type;} };
-struct Float_type_t				: Token { Tok type () {return Tok::Float_type;} };
+struct I16_type_t : Token { Tok type () { return Tok::I16_type; } void run (Runner* v) { v->run (this); } };
+struct I32_type_t : Token { Tok type () { return Tok::I32_type; } void run (Runner* v) { v->run (this); } };
+struct I64_type_t : Token { Tok type () { return Tok::I64_type; } void run (Runner* v) { v->run (this); } };
+struct U16_type_t : Token { Tok type () { return Tok::U16_type; } void run (Runner* v) { v->run (this); } };
+struct U32_type_t : Token { Tok type () { return Tok::U32_type; } void run (Runner* v) { v->run (this); } };
+struct U64_type_t : Token { Tok type () { return Tok::U64_type; } void run (Runner* v) { v->run (this); } };
+struct F32_type_t : Token { Tok type () { return Tok::F32_type; } void run (Runner* v) { v->run (this); } };
+struct F64_type_t : Token { Tok type () { return Tok::F64_type; } void run (Runner* v) { v->run (this); } };
+struct String_type_t : Token { Tok type () { return Tok::String_type; } void run (Runner* v) { v->run (this); } };
+struct Vector_type_t : Token { Tok type () { return Tok::String_type; } void run (Runner* v) { v->run (this); } };
+struct TemplateKey_t : Token { Tok type () { return Tok::TemplateKey; } void run (Runner* v) { v->run (this); } };
+struct Array_type_t : Token { Tok type () { return Tok::Array_type; } void run (Runner* v) { v->run (this); } };
+struct Map_type_t : Token { Tok type () { return Tok::Map_type; } void run (Runner* v) { v->run (this); } };
+struct Atomic_type_t : Token { Tok type () { return Tok::Atomic_type; } void run (Runner* v) { v->run (this); } };
+struct SharedPtr_type_t : Token { Tok type () { return Tok::SharedPtr_type; } void run (Runner* v) { v->run (this); } };
+struct UniquePtr_type_t : Token { Tok type () { return Tok::UniquePtr_type; } void run (Runner* v) { v->run (this); } };
+struct Typename_t : Token { Tok type () { return Tok::Typename; } void run (Runner* v) { v->run (this); } };
 struct OpenParenthesis_t		: Token { Tok type () {return Tok::OpenParenthesis;} void run (Runner* v) {v->run (this);} };
 struct CloseParenthesis_t		: Token { Tok type () {return Tok::CloseParenthesis;} void run (Runner* v) {v->run (this);} };
 struct OpenBrackets_t			: Token { Tok type () {return Tok::OpenBrackets;} };
@@ -630,7 +683,7 @@ struct ShowTree : Runner {
 	void run (StartType_t* t) override {
 		//std::cout << "type:";
 	}
-	void run (Int_type_t* t) override {
+	void run (I32_type_t* t) override {
 		//std::cout << "[int_t]";
 	}
 	void run (EndType_t* t) override {
@@ -761,7 +814,23 @@ struct Spy2 : Runner {
 		std::cout << "]";
 	}
 	void run (StartType_t* t) override {std::cout << "type:";}
-	void run (Int_type_t* t) override {std::cout << "[int_t]";}
+	void run (I16_type_t* t) override { std::cout << "[i16_t]"; }
+	void run (I32_type_t* t) override { std::cout << "[i32_t]"; }
+	void run (I64_type_t* t) override { std::cout << "[i64_t]"; }
+	void run (U16_type_t* t) override { std::cout << "[u16_t]"; }
+	void run (U32_type_t* t) override { std::cout << "[u32_t]"; }
+	void run (U64_type_t* t) override { std::cout << "[u64_t]"; }
+	void run (F32_type_t* t) override { std::cout << "[f32_t]"; }
+	void run (F64_type_t* t) override { std::cout << "[f64_t]"; }
+	void run (String_type_t* t) override { std::cout << "[string_t]"; }
+	void run (Vector_type_t* t) override { std::cout << "[vector_t]"; }
+	void run (Array_type_t* t) override { std::cout << "[array_t]"; }
+	void run (SharedPtr_type_t* t) override { std::cout << "[shared_ptr_t]"; }
+	void run (UniquePtr_type_t* t) override { std::cout << "[unique_ptr_t]"; }
+	void run (Map_type_t* t) override { std::cout << "[map_t]"; }
+	void run (Atomic_type_t* t) override { std::cout << "[atomic_ref_t]"; }
+	void run (Typename_t* t) override { std::cout << "[typename_t]"; }
+	void run (TemplateKey_t* t) override { std::cout << "[template_key]"; }
 	void run (EndType_t* t) override {std::cout << ":endType";}
 	void run (If_t* t) override {
 		std::cout << " IF ";
