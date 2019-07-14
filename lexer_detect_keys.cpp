@@ -13,20 +13,33 @@ namespace lexer_detect_keys_private
 	bool countParenthesis (Tok type, size_t parReg[6], size_t& idx);
 	bool err = false;
 
-	std::vector<size_t>* key_dp_st_pb{nullptr}; // после инициализации, стек глубины последнего ключевого слова (по круглым скобкам)
-	size_t* p_reg{nullptr}; // после инициализации, что-то типо массива счётчиков (:0 ):0 [:0 ]:0 {:0 }:0
+	// После инициализации, стек глубины последнего ключевого слова (по круглым скобкам)
+	std::vector<size_t>* key_dp_st_pb{nullptr};
 
-	void pbOpnBrReg () { // alias
-		if (key_dp_st_pb!= nullptr && p_reg != nullptr) {
-			key_dp_st_pb->push_back (p_reg[0] - p_reg[1]); // запомнили количество открывающихся круглых скобок для текущего ключевого слова
-		}
-	}
+	// После инициализации, массив счётчиков скобок (:0 ):0 [:0 ]:0 {:0 }:0
+	size_t* p_reg{nullptr};
 
+	// После вызова loadKeyWords, мапа из ключевого слова, в токен
 	std::map<std::string, Tok> keyWords;
+
+	enum class WasReplased {
+		Nothing,
+		Lambda,
+		NotLambda
+	};
 }
 
+
+/*	## Loads key words from path ##
+
+	Needs to be called before lexering and parsing source code.
+	Expected that file in path contain list of pairs:
+
+	[key_word, local_key_word]
+*/
 bool loadKeyWords (const char path[])
 {
+	lexer_detect_keys_private::keyWords.clear ();
 	using namespace lexer_detect_keys_private;
 	bool res = true;
 	enum Ord {FIRST, SECOND} order{Ord::FIRST};
@@ -76,68 +89,69 @@ bool loadKeyWords (const char path[])
 
 	size_t idx = 0;
 	std::string buff = "";
+
 	for (auto it : keyWords_toks) {
-		auto type = it->type ();
-		if (type == Tok::Space) continue;
-		if (type == Tok::Id) {
+
+		if (it->type () == Tok::Id) {
 			if (order == Ord::FIRST) {
 				buff = as<Id_t> (it)->getStr ();
-				//std::wcout << as<Id_t> (it)->getId () << std::endl;
 				p = it;
 				order = Ord::SECOND;
 			} else {
-				puts (("puts ( " + buff + " )").c_str ());
 				keyWords[as<Id_t> (it)->getStr ()] = vals[buff];
 				order = Ord::FIRST;
 				++idx;
 			}
-		}
-		else {
-			if (type == Tok::Space) puts ("    space");
-			else if (type == Tok::ForKey) puts ("     forKey");
 		}
 	}
 
 	return res;
 }
 
-int change (std::vector<shp_t>& tokens, size_t& idx, Tok t)
+/*	## Replaces id token with matching key-word token ##
+	
+	Takes reference to container of tokens, index of token to be
+	replaced to be changed and type of token that needs to be set.
+*/
+lexer_detect_keys_private::WasReplased
+	replace (std::vector<shp_t>& tokens, size_t& idx, Tok t)
 {
-	int res = 0;
+	using namespace lexer_detect_keys_private;
+	WasReplased res = WasReplased::Nothing;
 	switch (t) {
 
 	case Tok::Lambda:
 		tokens[idx] = shp_t (new Lambda_t ());
-		res = 1;
+		res = WasReplased::Lambda;
 		break;
 
 	case Tok::If:
 		tokens[idx] = shp_t (new IfKey_t ());
-		res = 2;
+		res = WasReplased::NotLambda;
 		break;
 		
 	case Tok::Else:
 		tokens[idx] = shp_t (new ElseKey_t ());
 		tokens.insert (std::begin (tokens) + idx, shp_t (new CloseBody_t ()));
 		++idx;
-		res = 2;
+		res = WasReplased::NotLambda;
 		break;
 		
 	case Tok::Elif:
 		tokens[idx] = shp_t (new ElifKey_t ());
 		tokens.insert (std::begin (tokens) + idx, shp_t (new CloseBody_t ()));
 		++idx;
-		res = 2;
+		res = WasReplased::NotLambda;
 		break;
 
 	case Tok::Try:
 		tokens[idx] = shp_t (new Try_t ());
-		res = 2;
+		res = WasReplased::NotLambda;
 		break;
 
 	case Tok::Catch:
 		tokens[idx] = shp_t (new Catch_t ());
-		res = 2;
+		res = WasReplased::NotLambda;
 		break;
 
 	case Tok::For: {
@@ -157,38 +171,42 @@ int change (std::vector<shp_t>& tokens, size_t& idx, Tok t)
 				--jdx;
 			}
 		}
-		res = 2;
+		res = WasReplased::NotLambda;
 		break;
 	}
 	case Tok::While:
 		tokens[idx] = shp_t (new WhileKey_t ());
-		res = 2;
+		res = WasReplased::NotLambda;
 		break;
 
-	case Tok::Return:		{ tokens[idx] = shp_t (new Return_t ());	break; }
-	case Tok::Assert:		{ tokens[idx] = shp_t (new Assert_t ());	break; }
-	case Tok::Let:			{ tokens[idx] = shp_t (new Let_t ());		break; }
-	case Tok::Throw:		{ tokens[idx] = shp_t (new Throw_t ());		break; }
-	case Tok::And:			{ tokens[idx] = shp_t (new And_t ());		break; }
-	case Tok::Or:			{ tokens[idx] = shp_t (new Or_t ());		break; }
-	case Tok::Not:			{ tokens[idx] = shp_t (new Not_t ());		break; }
-	case Tok::Break:		{ tokens[idx] = shp_t (new Break_t ());		break; }
-	case Tok::Const:		{ tokens[idx] = shp_t (new Const_t ());		break; }
-	case Tok::Import:		{ tokens[idx] = shp_t (new Import_t ());	break; }
-	case Tok::As:			{ tokens[idx] = shp_t (new As_t ());		break; }
-	case Tok::Empty:		{ tokens[idx] = shp_t (new Empty_t ());		break; }
-	case Tok::Delete:		{ tokens[idx] = shp_t (new Delete_t ());	break; }
-	case Tok::Continue:		{ tokens[idx] = shp_t (new Continue_t ());  break; }
-	case Tok::I16_type: { tokens[idx] = shp_t (new I16_type_t ()); break; }
-	case Tok::I32_type:	{ tokens[idx] = shp_t (new I32_type_t ());	break; }
-	case Tok::U32_type:	{ tokens[idx] = shp_t (new U32_type_t ());	break; }
-	case Tok::F64_type:	{ tokens[idx] = shp_t (new F64_type_t ());break; }
-	case Tok::Typename: { tokens[idx] = shp_t (new Typename_t ()); break; }
-	case Tok::SharedPtr_type: { tokens[idx] = shp_t (new SharedPtr_type_t ()); break; }
-	case Tok::UniquePtr_type: { tokens[idx] = shp_t (new UniquePtr_type_t ()); break; }
-	case Tok::Atomic_type: { tokens[idx] = shp_t (new Atomic_type_t ()); break; }
-	case Tok::String_type: { tokens[idx] = shp_t (new String_type_t ()); break; }
-	//case Tok::Ban	{tokens[idx] = shp_t(new Ban_t());				break;}
+	case Tok::Return:		{
+		tokens[idx] = shp_t (new Return_t ());
+		res = WasReplased::NotLambda;
+		break;
+	}
+	case Tok::Assert:		{ tokens[idx] = shp_t (new Assert_t ());	res = WasReplased::NotLambda; break; }
+	case Tok::Let:			{ tokens[idx] = shp_t (new Let_t ());		res = WasReplased::NotLambda; break; }
+	case Tok::Throw:		{ tokens[idx] = shp_t (new Throw_t ());		res = WasReplased::NotLambda; break; }
+	case Tok::And:			{ tokens[idx] = shp_t (new And_t ());		res = WasReplased::NotLambda; break; }
+	case Tok::Or:			{ tokens[idx] = shp_t (new Or_t ());		res = WasReplased::NotLambda; break; }
+	case Tok::Not:			{ tokens[idx] = shp_t (new Not_t ());		res = WasReplased::NotLambda; break; }
+	case Tok::Break:		{ tokens[idx] = shp_t (new Break_t ());		res = WasReplased::NotLambda; break; }
+	case Tok::Const:		{ tokens[idx] = shp_t (new Const_t ());		res = WasReplased::NotLambda; break; }
+	case Tok::Import:		{ tokens[idx] = shp_t (new Import_t ());	res = WasReplased::NotLambda; break; }
+	case Tok::As:			{ tokens[idx] = shp_t (new As_t ());		res = WasReplased::NotLambda; break; }
+	case Tok::Empty:		{ tokens[idx] = shp_t (new Empty_t ());		res = WasReplased::NotLambda; break; }
+	case Tok::Delete:		{ tokens[idx] = shp_t (new Delete_t ());	res = WasReplased::NotLambda; break; }
+	case Tok::Continue:		{ tokens[idx] = shp_t (new Continue_t ());  res = WasReplased::NotLambda; break; }
+	case Tok::I16_type: { tokens[idx] = shp_t (new I16_type_t ()); res = WasReplased::NotLambda; break; }
+	case Tok::I32_type:	{ tokens[idx] = shp_t (new I32_type_t ());	res = WasReplased::NotLambda; break; }
+	case Tok::U32_type:	{ tokens[idx] = shp_t (new U32_type_t ());	res = WasReplased::NotLambda; break; }
+	case Tok::F64_type:	{ tokens[idx] = shp_t (new F64_type_t ());res = WasReplased::NotLambda; break; }
+	case Tok::Typename: { tokens[idx] = shp_t (new Typename_t ()); res = WasReplased::NotLambda; break; }
+	case Tok::SharedPtr_type: { tokens[idx] = shp_t (new SharedPtr_type_t ()); res = WasReplased::NotLambda; break; }
+	case Tok::UniquePtr_type: { tokens[idx] = shp_t (new UniquePtr_type_t ()); res = WasReplased::NotLambda; break; }
+	case Tok::Atomic_type: { tokens[idx] = shp_t (new Atomic_type_t ()); res = WasReplased::NotLambda; break; }
+	case Tok::String_type: { tokens[idx] = shp_t (new String_type_t ()); res = WasReplased::NotLambda; break; }
+
 	default: break;
 	}
 	return res;
@@ -209,6 +227,17 @@ size_t findCloser (std::vector<shp_t>& tokens, size_t jdx) {
 	return kdx;
 }
 
+/*	## Second phase of lexering code ##
+
+	- replase id tokens with matching key-word tokens
+	- replase num tokens (values in wstring) with f32/i32/u32 tokens
+	- replase id!() and \() with template and lambda parenthesis
+	- replase nye token with not_token
+	- set type-flag tokens (where starts/ends type)
+	- check for brackets order
+	- replase dots and commas (after key-word tokens)
+	  with open-body token
+*/
 bool lexer_2 (std::vector<std::shared_ptr<Token> >& tokens)
 {
 	using namespace lexer_detect_keys_private;
@@ -219,12 +248,9 @@ bool lexer_2 (std::vector<std::shared_ptr<Token> >& tokens)
 		notReady,
 		readyForComma,
 		readyForDot
-		//readyForColon,
-		//readyForSecondColon
+	}
+	readyToStartBody = notReady;
 
-	} readyToStartBody = notReady;
-
-	//bool workOnType = false;
 	std::vector<int> workOnTypeStack;
 	workOnTypeStack.reserve (2);
 
@@ -254,7 +280,6 @@ bool lexer_2 (std::vector<std::shared_ptr<Token> >& tokens)
 			if (!workOnTypeStack.empty()) {
 				if (type == Tok::CloseParenthesis && workOnTypeStack.back() - 1 == reg[0] - reg[1]) {
 					tokens.insert (std::begin (tokens) + idx, shp_t (new EndType_t ()));
-					dlog ("one");
 					workOnTypeStack.pop_back ();
 					++idx;
 				}
@@ -444,9 +469,19 @@ bool lexer_2 (std::vector<std::shared_ptr<Token> >& tokens)
 			const auto&& id = as<Id_t>(tokens[idx]) -> getStr ();
 
 			if (keyWords.count (id)) {
-				int tr = change (tokens, idx, keyWords[id]); // заменили тип ноды с id на ключевое слово
-				if (tr == 1) {readyToStartBody = readyForDot; depth = reg[0] - reg[1];} // если лямбда, готовимся обработать не вложенную в скобки точку
-				if (tr == 2) pbOpnBrReg (); // запомнили глубину ключевого слова
+				
+				WasReplased was_replased = replace (tokens, idx, keyWords[id]); // заменили тип ноды с id на ключевое слово
+				
+				// Если лямбда
+				if (was_replased == WasReplased::Lambda) {
+					// готовимся обработать не вложенную в скобки точку
+					readyToStartBody = readyForDot; depth = reg[0] - reg[1];
+				}
+				if (was_replased == WasReplased::NotLambda) { // запомнили 'глубину по круглым скобкам' для ключевого слова
+					if (key_dp_st_pb != nullptr && p_reg != nullptr) {
+						key_dp_st_pb->push_back (p_reg[0] - p_reg[1]);
+					}
+				}
 				continue;
 			}
 		}

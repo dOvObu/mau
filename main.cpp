@@ -33,13 +33,15 @@ int main()
 	vector <shp_t> tokens;
 	vector<vector<shp_t>*> lists;
 	lexer_1 ("shit_0.txt", tokens);
-	
+
+
+	printf ("tokens.size == %zu\n", tokens.size ());
 	if (tokens.empty ()) {
+		#ifndef __unix__
 		system ("pause");
+		#endif
 		return 0;
 	}
-	printf ("tokens.size == %zu\n", tokens.size ());
-	int co = 0;
 	
 	//printTokens ("\n\n\n===----- after lexer_1 -----===\n\n", tokens, "\n\n\n");
 	//> добавление key-слов
@@ -49,13 +51,17 @@ int main()
 	//> поиск скобок типа лямбд \() и типа шаблонов !()
 	try {
 		if (!lexer_2 (tokens)) {
+			#ifndef __unix__
 			system ("pause");
+			#endif
 			return 1;
 		}
 	}
 	catch (std::string str) {
-		dlog (str);
+		puts (str.c_str ());
+		#ifndef __unix__ 
 		system ("pause");
+		#endif
 		return 1;
 	}
 
