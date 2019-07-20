@@ -2,6 +2,7 @@
 #define PERSER_OF_CALLS_AND_UNARY_OPERATORS_H
 #include "tokens.h"
 #include "dLog.h"
+#include "spy2.h"
 #include <iostream>
 #include <set>
 
@@ -18,12 +19,23 @@ void reduceDotOpIfPossible (
 {
 	if (tokens[into]->type () == opType) { // нашли точку
 		size_t lshift = into - 1, rshift = into + 1;
-		while (tokens[rshift]->type () == Tok::Space) ++rshift; // нашли id-шник справа
-		while (tokens[lshift]->type () == Tok::Space) { if (lshift == 0) return; --lshift; } // нашли скобку, либо id-шник слева
-		if (tokens[lshift]->type () == Tok::OpenBody || tokens[lshift]->type () == Tok::OpenBodyOfLambda) return; // какая-то странная точка (может из класса, а может из лямбды)
+		// нашли id-шник справа
+		while (tokens[rshift]->type () == Tok::Space) {
+			++rshift;
+		}
+		// нашли скобку, либо id-шник слева
+		while (tokens[lshift]->type () == Tok::Space) {
+			if (lshift == 0) return;
+			--lshift;
+		} 
+		
+		// какая-то странная точка (может из класса, а может из лямбды)
+		Tok type = tokens[lshift]->type ();
+		if (type == Tok::OpenBody || type == Tok::OpenBodyOfLambda) return;
 
-		Tok type = tokens[rshift]->type ();
-		if (trigger.count (type) > 0) { // если справа от скобки id,
+		// если справа от скобки или id,
+		type = tokens[rshift]->type ();
+		if (trigger.count (type) > 0) {
 			type = tokens[lshift]->type (); // а слева, закрывающаяся скобка
 			if (isCloser (type)) {
 				// то ищем открытие этой скобки

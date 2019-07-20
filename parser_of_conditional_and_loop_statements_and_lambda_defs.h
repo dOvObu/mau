@@ -3,6 +3,7 @@
 
 #include "tokens.h"
 #include "dLog.h"
+#include "spy2.h"
 
 #include <algorithm>
 

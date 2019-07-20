@@ -34,9 +34,7 @@ void reduceTemplateCalls (
 void reduceArrays (
 		std::vector<shp_t>& tokens,
 		const Tok& opner,
-		//const Tok& clser,
 		const Tok& separ,
-		//const Tok& ignor,
 		std::vector<std::vector<shp_t>*>& lists
 );
 

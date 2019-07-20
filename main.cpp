@@ -6,7 +6,8 @@
 #include "parser_of_calls_and_unary_operators.h"
 #include "parser_of_binary_operators.h"
 #include "parser_of_conditional_and_loop_statements_and_lambda_defs.h"
-
+#include "spy2.h"
+#include "dbg_window.h"
 
 #include <map>
 #include <cstdio>
@@ -85,6 +86,8 @@ int main()
 	puts ("\n\n\n===----- after parser_3 -----===");
 	for (auto& it : lists) printTokens ("\n", *it, "\n");
 	puts ("\n");
+
+	showTokens (*(lists[0]));
 
 
 	// Добавление бинарных операторов
