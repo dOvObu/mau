@@ -32,7 +32,7 @@ const int gobho_int_size = 32;
 //	return nullptr;
 //}
 
-// Possible tokens
+// All Possible Tokens
 enum class Tok {
 	Dot,				// .
 	Semicolon,	// ;
@@ -208,15 +208,6 @@ struct Runner {
 	virtual void run (struct UniquePtr_type_t* t) = 0;
 	virtual void run (struct TemplateKey_t* t) = 0;
 	virtual void run (struct Typename_t* t) = 0;
-	/*
-	struct TemplateKey_t : Token { Tok type () { return Tok::TemplateKey; } void run (Runner* v) { v->run (this); } };
-	struct Array_type_t : Token { Tok type () { return Tok::Array_type; } void run (Runner* v) { v->run (this); } };
-	struct Map_type_t : Token { Tok type () { return Tok::Map_type; } void run (Runner* v) { v->run (this); } };
-	struct Atomic_type_t : Token { Tok type () { return Tok::Atomic_type; } void run (Runner* v) { v->run (this); } };
-	struct SharedPtr_type_t : Token { Tok type () { return Tok::SharedPtr_type; } void run (Runner* v) { v->run (this); } };
-	struct UniquePtr_type_t : Token { Tok type () { return Tok::UniquePtr_type; } void run (Runner* v) { v->run (this); } };
-	struct Typename_t : Token { Tok type () { return Tok::Typename; } void run (Runner* v) { v->run (this); } };
-	*/
 	virtual void run (struct Sword_t* t) = 0;
 	virtual void run (struct Arrow_t* t) = 0;
 	virtual void run (struct TemplateCall_t* t) = 0;
@@ -253,41 +244,36 @@ protected:
 
 static void pass (Token*t) {}
 
+#define RUNNER_METHOD void run (Runner* v) override {v->run (this);}
 
-struct Expr_t 			: Token { Tok type () { return Tok::Expr; } std::shared_ptr<std::vector<std::shared_ptr<Token>>> l; void run (Runner* v) override { v->run (this); } };
-struct Dot_t			: Token { Tok type () {return Tok::Dot;} void run (Runner* v) {v->run(this);} };
-struct Semicolon_t		: Token { Tok type () {return Tok::Semicolon;} void run (Runner* v) {v->run(this);} };
-struct Colon_t			: Token { Tok type () {return Tok::Colon;} void run (Runner* v) { v->run (this); } };
-struct DoubleColon_t	: Token { Tok type () {return Tok::DoubleColon; } void run (Runner* v) { v->run (this); } };
+struct Expr_t 			: Token { RUNNER_METHOD Tok type () {return Tok::Expr;} std::shared_ptr<std::vector<std::shared_ptr<Token>>> l; };
+struct Dot_t			: Token { RUNNER_METHOD Tok type () {return Tok::Dot;} };
+struct Semicolon_t		: Token { RUNNER_METHOD Tok type () {return Tok::Semicolon;} };
+struct Colon_t			: Token { RUNNER_METHOD Tok type () {return Tok::Colon;} };
+struct DoubleColon_t	: Token { RUNNER_METHOD Tok type () {return Tok::DoubleColon;} };
 struct Equal_t			: Token { Tok type () {return Tok::Equal;} };
 struct NotEqual_t		: Token { Tok type () {return Tok::NotEqual;} };
 struct nye_t			: Token { Tok type () {return Tok::nye;} };
-struct Assign_t			: Token { Tok type () {return Tok::Assign;} void run (Runner* v) {v->run(this);} };
-struct Lambda_t			: Token { Tok type () {return Tok::Lambda;} void run (Runner* v) {v->run(this);} };
+struct Assign_t			: Token { RUNNER_METHOD Tok type () {return Tok::Assign;} };
+struct Lambda_t			: Token { RUNNER_METHOD Tok type () {return Tok::Lambda;} };
 struct Return_t			: Token { Tok type () {return Tok::Return;} std::shared_ptr<std::vector<std::shared_ptr<Token> > > l{nullptr}; };
-struct In_t				: Token { Tok type () {return Tok::In;} void run (Runner* v) {v->run (this);} };
-struct OpenLambdaType_t : Token { Tok type () { return Tok::OpenLambdaType; } void run (Runner* v) {v->run(this);} };
-struct CloseLambdaType_t: Token { Tok type () { return Tok::CloseLambdaType; } void run (Runner* v) {v->run(this);} };
-struct LambdaType_t		: Token {
-	Tok type () { return Tok::LambdaType; }
+struct In_t				: Token { RUNNER_METHOD Tok type () {return Tok::In;} };
+struct OpenLambdaType_t : Token { RUNNER_METHOD Tok type () {return Tok::OpenLambdaType;} };
+struct CloseLambdaType_t: Token { RUNNER_METHOD Tok type () {return Tok::CloseLambdaType;} };
+struct LambdaType_t		: Token { RUNNER_METHOD Tok type () { return Tok::LambdaType; }
 	std::vector<std::shared_ptr<Token> > args; // types of args
 	std::shared_ptr<Token> ret; // type of ret values
-	void run (Runner* v) { v->run (this); }
 };
 struct OpenTemplateType_t	: Token { Tok type () { return Tok::OpenTemplateType; } };
 struct CloseTemplateType_t	: Token { Tok type () { return Tok::CloseTemplateType; } };
-struct TemplateCall_t	: Token {
-	Tok type () { return Tok::TemplateCall; }
+struct TemplateCall_t	: Token { RUNNER_METHOD Tok type () { return Tok::TemplateCall; }
 	std::shared_ptr<Id_t> id;
 	std::vector<std::shared_ptr<Token>> args;
-	void run (Runner* v) { v->run (this); }
 };
-struct LambdaDef_t		: Token {
-	Tok type () {return Tok::LambdaDef;}
+struct LambdaDef_t		: Token { RUNNER_METHOD Tok type () {return Tok::LambdaDef;}
 	std::shared_ptr<Token> body;
 	std::vector<std::pair<std::shared_ptr<Token>, std::shared_ptr<Token> > > args;
 	std::shared_ptr<Token> ret_type;
-	void run (Runner* v) {v->run(this);}
 };
 struct IfKey_t : Token {
 	Tok type () { return Tok::IfKey; }
@@ -298,25 +284,19 @@ struct ElifKey_t : Token {
 struct ElseKey_t : Token {
 	Tok type () { return Tok::ElseKey; }
 };
-struct If_t				: Token {
-	Tok type () {return Tok::If;}
+struct If_t				: Token { RUNNER_METHOD Tok type () {return Tok::If;}
 	std::shared_ptr<struct Expr_t> condition{nullptr};
 	std::shared_ptr<Token> body{nullptr}, alternative{nullptr};
-	void run (Runner* v) {v->run(this);}
 };
-struct Elif_t			: Token {
-	Tok type () {return Tok::Elif;}
+struct Elif_t			: Token { RUNNER_METHOD Tok type () {return Tok::Elif;}
 	std::shared_ptr<struct Expr_t> condition{nullptr};
 	std::shared_ptr<Token> body{nullptr}, alternative{nullptr};
-	void run (Runner* v) {v->run(this);}
 };
-struct Else_t			: Token {
-	Tok type () {return Tok::Else;}
+struct Else_t			: Token { RUNNER_METHOD Tok type () {return Tok::Else;}
 	#ifdef __unix__
 	std::shared_ptr<struct Expr_t> condition{nullptr};
 	#endif
 	std::shared_ptr<Token> body{nullptr}, alternative{nullptr};
-	void run (Runner* v) {v->run(this);}
 };
 struct Assert_t			: Token { Tok type () {return Tok::Assert;} };
 struct Let_t			: Token { Tok type () {return Tok::Let;} };
@@ -326,9 +306,7 @@ struct Catch_t			: Token { Tok type () {return Tok::Catch;} };
 struct ForKey_t : Token { Tok type () { return Tok::ForKey; } };
 struct For_t			: Token { Tok type () {return Tok::For;} };
 struct WhileKey_t : Token { Tok type () { return Tok::WhileKey; } };
-struct While_t			: Token {
-	Tok type () {return Tok::While;}
-	void run (Runner* v) {v->run(this);}
+struct While_t			: Token { RUNNER_METHOD Tok type () {return Tok::While;}
 	std::shared_ptr<struct Expr_t> condition{nullptr};
 	std::shared_ptr<Token> body{nullptr};
 	#ifdef __unix__
@@ -354,8 +332,7 @@ private:
 				std::wstring str;
 };
 
-struct Id_t					: Token {
-				Tok type () {return Tok::Id;}
+struct Id_t					: Token { RUNNER_METHOD Tok type () {return Tok::Id;}
 				void setId (const std::wstring& str) {
 					std::wstring _str (str);
 					this->str = cirToLat (_str);
@@ -363,18 +340,14 @@ struct Id_t					: Token {
 				std::wstring getId () { return latToCir (str); }
 				void setStr (const std::string& str) { this->str = str; }
 				std::string getStr () { return str; }
-				//llvm::Value* codegen () { return nullptr; }
-				void run (Runner* v) { v->run (this); }
 private:
 				std::string str;
 };
 
 
-struct String_t						: Token {
-				Tok type () {return Tok::String;}
+struct String_t						: Token { RUNNER_METHOD Tok type () {return Tok::String;}
 				void setId (const std::wstring& str){this->str = str;}
 				std::wstring getId () {return str;}
-				void run (Runner* v) { v->run (this); }
 private:
 				std::wstring str;
 };
@@ -389,54 +362,41 @@ private:
 				std::string str;
 };
 
-struct Int_t							: Token {
-				Tok type () {return Tok::Int;}
+struct Int_t							: Token { RUNNER_METHOD Tok type () {return Tok::Int;}
 				void setInt (const int val) {this->val = val;}
 				int getInt () {return val;}
-				void run (Runner* v) { v->run (this); }
-				//llvm::Value* codegen () { return llvm::ConstantInt::get (TheContext, llvm::APInt (gobho_int_size, this->val, true)); }
 private:
 				int val;
 };
 
-struct UInt_t							: Token {
-				Tok type () {return Tok::UInt;}
+struct UInt_t							: Token { RUNNER_METHOD Tok type () {return Tok::UInt;}
 				void setUInt (const unsigned val) {this->val = val;}
 				float getUInt () {return val;}
-				void run (Runner* v) { v->run (this); }
-				//llvm::Value* codegen () { return llvm::ConstantInt::get (TheContext, llvm::APInt (gobho_int_size, this->val)); }
 private:
 				unsigned val;
 };
 
-struct Float_t							: Token {
-				Tok type () {return Tok::Float;}
+struct Float_t							: Token { RUNNER_METHOD Tok type () {return Tok::Float;}
 				void setFloat (const float val) {this->val = val;}
 				float getFloat () {return val;}
-				void run (Runner* v) { v->run (this); }
-				//llvm::Value* codegen () { return llvm::ConstantFP::get (TheContext, llvm::APFloat (this->val)); }
 private:
 				float val;
 };
 
-struct ArrayDef_t							: Token {
-	Tok type () {return Tok::ArrayDef;}
-	std::vector<Expr_t> cells;
-	void run (Runner* v) { v->run (this); }
-};
+struct ArrayDef_t							: Token { RUNNER_METHOD Tok type () {return Tok::ArrayDef;} std::vector<Expr_t> cells; };
 
-struct I16_type_t : Token { Tok type () { return Tok::I16_type; } void run (Runner* v) { v->run (this); } };
-struct I32_type_t : Token { Tok type () { return Tok::I32_type; } void run (Runner* v) { v->run (this); } };
-struct I64_type_t : Token { Tok type () { return Tok::I64_type; } void run (Runner* v) { v->run (this); } };
-struct U16_type_t : Token { Tok type () { return Tok::U16_type; } void run (Runner* v) { v->run (this); } };
-struct U32_type_t : Token { Tok type () { return Tok::U32_type; } void run (Runner* v) { v->run (this); } };
-struct U64_type_t : Token { Tok type () { return Tok::U64_type; } void run (Runner* v) { v->run (this); } };
-struct F32_type_t : Token { Tok type () { return Tok::F32_type; } void run (Runner* v) { v->run (this); } };
-struct F64_type_t : Token { Tok type () { return Tok::F64_type; } void run (Runner* v) { v->run (this); } };
-struct String_type_t : Token { Tok type () { return Tok::String_type; } void run (Runner* v) { v->run (this); } };
-struct Vector_type_t : Token { Tok type () { return Tok::String_type; } void run (Runner* v) { v->run (this); } };
-struct TemplateKey_t : Token { Tok type () { return Tok::TemplateKey; } void run (Runner* v) { v->run (this); } };
-struct Array_type_t : Token { Tok type () { return Tok::Array_type; } void run (Runner* v) { v->run (this); } };
+struct I16_type_t : Token { RUNNER_METHOD Tok type () { return Tok::I16_type; } };
+struct I32_type_t : Token { RUNNER_METHOD Tok type () { return Tok::I32_type; } };
+struct I64_type_t : Token { RUNNER_METHOD Tok type () { return Tok::I64_type; } };
+struct U16_type_t : Token { RUNNER_METHOD Tok type () { return Tok::U16_type; } };
+struct U32_type_t : Token { RUNNER_METHOD Tok type () { return Tok::U32_type; } };
+struct U64_type_t : Token { RUNNER_METHOD Tok type () { return Tok::U64_type; } };
+struct F32_type_t : Token { RUNNER_METHOD Tok type () { return Tok::F32_type; } };
+struct F64_type_t : Token { RUNNER_METHOD Tok type () { return Tok::F64_type; } };
+struct String_type_t : Token { RUNNER_METHOD Tok type () { return Tok::String_type; } };
+struct Vector_type_t : Token { RUNNER_METHOD Tok type () { return Tok::String_type; } };
+struct TemplateKey_t : Token { RUNNER_METHOD Tok type () { return Tok::TemplateKey; } };
+struct Array_type_t : Token { RUNNER_METHOD Tok type () { return Tok::Array_type; } };
 struct Map_type_t : Token { Tok type () { return Tok::Map_type; } void run (Runner* v) { v->run (this); } };
 struct Atomic_type_t : Token { Tok type () { return Tok::Atomic_type; } void run (Runner* v) { v->run (this); } };
 struct SharedPtr_type_t : Token { Tok type () { return Tok::SharedPtr_type; } void run (Runner* v) { v->run (this); } };
@@ -484,30 +444,16 @@ struct ArrayCall_t				: Token {
 	std::shared_ptr<Id_t> id;
 	std::vector<std::shared_ptr<Token>> args;
 };
-struct Minus_t						: Token { Tok type () {return Tok::Minus;}};
-struct UnMinus_t					: Token { Tok type () {return Tok::UnMinus;} std::shared_ptr<Token> right; };
-struct Plus_t							: Token { Tok type () {return Tok::Plus;}};
-struct Multiply_t					: Token { Tok type () {return Tok::Multiply;} };
-struct Power_t						: Token { Tok type () {return Tok::Power;}};
+struct Minus_t					: Token { Tok type () {return Tok::Minus;}};
+struct UnMinus_t				: Token { Tok type () {return Tok::UnMinus;} std::shared_ptr<Token> right; };
+struct Plus_t					: Token { Tok type () {return Tok::Plus;}};
+struct Multiply_t				: Token { Tok type () {return Tok::Multiply;} };
+struct Power_t					: Token { Tok type () {return Tok::Power;}};
 struct Devide_t					: Token { Tok type () {return Tok::Devide;} };
-struct Mod_t							: Token { Tok type () {return Tok::Mod;}};
+struct Mod_t					: Token { Tok type () {return Tok::Mod;}};
 struct Decrement_t				: Token { Tok type () {return Tok::Decrement;} std::shared_ptr<Token> right; };
 struct Increment_t				: Token { Tok type () {return Tok::Increment;} std::shared_ptr<Token> right; };
-struct binop_t						: Token { Tok type () {return Tok::binop;} Tok opType; std::shared_ptr<Token> left, right;
-																		void run (Runner* v) { v->run (this); }
-																		//llvm::Value* codegen() {
-																			//llvm::Value* L = left->codegen();
-																			//llvm::Value* R = right->codegen();
-																			//if (opType == Tok::Multiply) return Builder.CreateFMul (L, R, "multmp");
-																			//if (opType == Tok::Devide) return Builder.CreateFDiv (L, R, "divtmp");
-																			//if (opType == Tok::Plus) return Builder.CreateFAdd (L, R, "addtmp");
-																			//if (opType == Tok::Minus) return Builder.CreateFSub(L, R, "subtmp");
-																			//if (opType == Tok::Mod) return Builder.CreateFDiv(L, Builder.CreateFRem(L, R,"remtmp"), "divtmp");
-																			//if (opType == Tok::Less) return Builder.CreateUIToFP(Builder.CreateFCmpULT(L, R, "lmptmp"), llvm::Type::getDoubleTy(TheContext),"booltmp");
-																			//if (opType == Tok::LessOrEqual) return Builder.CreateNot(Builder.CreateFCmpULT(L, R, "lmptmp"));
-																			//return nullptr;
-																		//}
-																	};
+struct binop_t					: Token { Tok type () {return Tok::binop;} Tok opType; std::shared_ptr<Token> left, right; void run (Runner* v) { v->run (this); }};
 
 struct FieldCall_t : Token { Tok type () { return Tok::FieldCall; } std::shared_ptr<Token> owner, id; };
 struct TypeFieldCall_t : Token { Tok type () { return Tok::TypeFieldCall; } std::shared_ptr<Token> owner, id; };
@@ -572,179 +518,6 @@ struct Spy : Runner {
 	~Spy () = default;
 };
 
-
-struct ShowTree : Runner {
-
-	//std::vector<sf::Vector2i> nodes;
-	//sf::Vector2i cur; // текущая позиция
-	ShowTree () {}
-	void run (UInt_t* t) override {  }
-	void run (Int_t* t) override {
-		//std::cout << "[i" << t->getInt () << "]";
-	}
-	void run (Float_t* t) override {
-		//std::cout << "[f" << t->getFloat () << "]";
-	}
-	void run (String_t* t) override {
-		//std::wcout << L"[s'" << t->getId () << L"']";
-	}
-	void run (Expr_t* t) override {
-		for (auto& it : *(t->l.get ())) {
-			it->run (this);
-		}
-	}
-	/*
-	void run (Call_t* t) override {
-		cur.x += 10;
-		cur.y += 10;
-		nodes.push_back (cur);
-		bool tr = true;
-		std::wcout << "call: " << t->id->getId () << std::endl;
-		//std::wcout << "[Call " << t->id->getId () << '(';
-		for (auto& it : t->args) {
-			if (tr) {
-				tr = false;
-			}
-			else {
-				//std::cout << ", ";
-			}
-			it->run (this);
-		}
-		//std::cout << ")]";
-		cur.x -= 10;
-	}*/
-	void run (binop_t* t) {
-		t->left->run (this);
-		/*switch (t->opType) {
-		case Tok::Plus: std::cout << '+'; break;
-		case Tok::Minus: std::cout << '-'; break;
-		case Tok::Devide: std::cout << '/'; break;
-		case Tok::Multiply: std::cout << '*'; break;
-		case Tok::Equal: std::cout << "=="; break;
-		default: break;
-		}*/
-		t->right->run (this);
-	}
-	void run (Id_t* t) override {
-		//std::wcout << "[Id: " << t->getId () << "]";
-	}
-	void run (ArrayDef_t* t) override {
-		bool tr = false;
-		//std::cout << "[m";
-		for (auto& it : t->cells) {
-			if (tr) {
-				//std::cout << ", ";
-			}
-			else { tr = true; }
-			it.run (this);
-		}
-		//std::cout << "]";
-	}
-	void run (OpenParenthesis_t* t) override {
-		//std::cout << " (:";
-	}
-	void run (CloseParenthesis_t* t) override {
-		//std::cout << ":) ";
-	}
-	void run (Space_t* t) override {
-		//std::cout << "_";
-	}
-	void run (Dot_t* t) override {
-		//std::cout << ".";
-	}
-	void run (Lambda_t* t) override {
-		//std::cout << "\\";
-	}
-	void run (Semicolon_t* t) override {
-		//std::cout << "|";
-	}
-	void run (Colon_t* t) override {
-		//std::cout << "is";
-	}
-	void run (DoubleColon_t* t) override {
-		//std::cout << "::";
-	}
-	void run (OpenBody_t* t) override {
-		//std::cout << " {:";
-	}
-	void run (OpenBodyOfLambda_t* t) override {
-		//std::cout << " {:";
-	}
-	void run (CloseBody_t* t) override {
-		//std::cout << ":} ";
-	}
-	void run (LambdaDef_t* t) override {
-		//std::cout << "[lambda" << t->args.size () << "(";
-		for (auto& it : t->args) it.second->run (this);
-		//std::cout << "):";
-		t->body->run (this);
-		//std::cout << "]";
-	}
-	void run (StartType_t* t) override {
-		//std::cout << "type:";
-	}
-	void run (I32_type_t* t) override {
-		//std::cout << "[int_t]";
-	}
-	void run (EndType_t* t) override {
-		//std::cout << ":endType";
-	}
-	void run (If_t* t) override {
-		//std::cout << " IF ";
-	}
-	void run (InCall_is_t* t) override {
-		//std::wcout << t->id->getId () << L":";
-		t->expr->run (this);
-	}
-	void run (Else_t* t) override {
-		//std::cout << " ELSE ";
-	}
-	void run (Elif_t* t) override {
-		//std::cout << " ELIF ";
-	}
-	void run (While_t* t) override {
-		//std::cout << " WHILE ";
-	}
-	void run (Assign_t* t) override {
-		//std::cout << "=";
-	}
-	/*
-	void show (Token* t, const int width, const int height, const char name[]) {
-
-		sf::RenderWindow window (sf::VideoMode (width, height), name);
-		this->nodes.push_back (cur = {0, 0});
-		t->run (this); // инициализировали отображение узлов и рёбер
-		sf::View v;
-		v.setCenter (static_cast<float> (width) * 0.5f, static_cast<float> (height) * 0.5f);
-		v.setSize (width, height);
-		sf::RectangleShape sh;
-		sh.setFillColor (sf::Color::Black);
-		sh.setSize ({5, 5});
-		const float vel = 0.25;
-		while (window.isOpen ()) {
-			sf::Event ev;
-			while (window.pollEvent (ev)) {
-				if (ev.type == sf::Event::Closed || sf::Keyboard::isKeyPressed (sf::Keyboard::Q))
-					window.close ();
-			}
-			if (sf::Keyboard::isKeyPressed (sf::Keyboard::A)) v.move (-vel, 0);
-			if (sf::Keyboard::isKeyPressed (sf::Keyboard::D)) v.move (vel, 0);
-			if (sf::Keyboard::isKeyPressed (sf::Keyboard::W)) v.move (0, -vel);
-			if (sf::Keyboard::isKeyPressed (sf::Keyboard::S)) v.move (0, vel);
-
-			window.setView (v);
-			window.clear (sf::Color::White);
-			// отрисовали отображение узлов и рёбер
-			for (auto& it : nodes) {
-				sh.setPosition (it.x, it.y);
-				window.draw (sh);
-			}
-			window.display ();
-		}
-	}
-	*/
-	~ShowTree () = default;
-};
 
 
 struct Spy2 : Runner {

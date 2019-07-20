@@ -117,7 +117,10 @@ lexer_detect_keys_private::WasReplased
 	replace (std::vector<shp_t>& tokens, size_t& idx, Tok t)
 {
 	using namespace lexer_detect_keys_private;
+
 	WasReplased res = WasReplased::Nothing;
+	auto notLambdaRepl = [&res]() {res = WasReplased::NotLambda;};
+
 	switch (t) {
 
 	case Tok::Lambda:
@@ -125,95 +128,82 @@ lexer_detect_keys_private::WasReplased
 		res = WasReplased::Lambda;
 		break;
 
-	case Tok::If:
-		tokens[idx] = shp_t (new IfKey_t ());
-		res = WasReplased::NotLambda;
-		break;
 		
 	case Tok::Else:
 		tokens[idx] = shp_t (new ElseKey_t ());
 		tokens.insert (std::begin (tokens) + idx, shp_t (new CloseBody_t ()));
 		++idx;
-		res = WasReplased::NotLambda;
+		notLambdaRepl ();
 		break;
 		
 	case Tok::Elif:
 		tokens[idx] = shp_t (new ElifKey_t ());
 		tokens.insert (std::begin (tokens) + idx, shp_t (new CloseBody_t ()));
 		++idx;
-		res = WasReplased::NotLambda;
+		notLambdaRepl ();
 		break;
 
-	case Tok::Try:
-		tokens[idx] = shp_t (new Try_t ());
-		res = WasReplased::NotLambda;
-		break;
-
-	case Tok::Catch:
-		tokens[idx] = shp_t (new Catch_t ());
-		res = WasReplased::NotLambda;
-		break;
-
+	case Tok::If:              tokens[idx] = shp_t (new IfKey_t          ());    notLambdaRepl (); break;
+	case Tok::Try:             tokens[idx] = shp_t (new Try_t            ());    notLambdaRepl (); break;
+	case Tok::Catch:           tokens[idx] = shp_t (new Catch_t          ());    notLambdaRepl (); break;
+	case Tok::While:           tokens[idx] = shp_t (new WhileKey_t       ());    notLambdaRepl (); break;
+	case Tok::Return:          tokens[idx] = shp_t (new Return_t         ());    notLambdaRepl (); break;
+	case Tok::Assert:          tokens[idx] = shp_t (new Assert_t         ());    notLambdaRepl (); break;
+	case Tok::Let:             tokens[idx] = shp_t (new Let_t            ());    notLambdaRepl (); break;
+	case Tok::Throw:           tokens[idx] = shp_t (new Throw_t          ());    notLambdaRepl (); break;
+	case Tok::And:             tokens[idx] = shp_t (new And_t            ());    notLambdaRepl (); break;
+	case Tok::Or:              tokens[idx] = shp_t (new Or_t             ());    notLambdaRepl (); break;
+	case Tok::Not:             tokens[idx] = shp_t (new Not_t            ());    notLambdaRepl (); break;
+	case Tok::Break:           tokens[idx] = shp_t (new Break_t          ());    notLambdaRepl (); break;
+	case Tok::Const:           tokens[idx] = shp_t (new Const_t          ());    notLambdaRepl (); break;
+	case Tok::Import:          tokens[idx] = shp_t (new Import_t         ());    notLambdaRepl (); break;
+	case Tok::As:              tokens[idx] = shp_t (new As_t             ());    notLambdaRepl (); break;
+	case Tok::Empty:           tokens[idx] = shp_t (new Empty_t          ());    notLambdaRepl (); break;
+	case Tok::Delete:          tokens[idx] = shp_t (new Delete_t         ());    notLambdaRepl (); break;
+	case Tok::Continue:        tokens[idx] = shp_t (new Continue_t       ());    notLambdaRepl (); break;
+	case Tok::I16_type:        tokens[idx] = shp_t (new I16_type_t       ());    notLambdaRepl (); break;
+	case Tok::I32_type:        tokens[idx] = shp_t (new I32_type_t       ());    notLambdaRepl (); break;
+	case Tok::U32_type:        tokens[idx] = shp_t (new U32_type_t       ());    notLambdaRepl (); break;
+	case Tok::F64_type:        tokens[idx] = shp_t (new F64_type_t       ());    notLambdaRepl (); break;
+	case Tok::Typename:        tokens[idx] = shp_t (new Typename_t       ());    notLambdaRepl (); break;
+	case Tok::SharedPtr_type:  tokens[idx] = shp_t (new SharedPtr_type_t ());    notLambdaRepl (); break;
+	case Tok::UniquePtr_type:  tokens[idx] = shp_t (new UniquePtr_type_t ());    notLambdaRepl (); break;
+	case Tok::Atomic_type:     tokens[idx] = shp_t (new Atomic_type_t    ());    notLambdaRepl (); break;
+	case Tok::String_type:     tokens[idx] = shp_t (new String_type_t    ());    notLambdaRepl (); break;
+	
 	case Tok::For: {
+
 		tokens[idx] = shp_t (new ForKey_t ());
-		Tok type = Tok::ForKey;
-		size_t jdx = idx + 1;
-		// до двоиточия -- могут оставаться только id-шки
-		// само двоиточие заменяется на оператор in/из
-		for (;jdx < tokens.size (); ++jdx) {
-			type = tokens[jdx]->type ();
+
+		for (size_t jdx = idx + 1; jdx < tokens.size (); ++jdx) {
+
+			Tok type = tokens[jdx]->type ();
+
 			if (type == Tok::Colon || type == Tok::In) {
 				tokens[jdx].reset (new In_t ());
 				break;
 			}
-			if (type != Tok::Id) {
-				tokens.erase (std::begin (tokens) + jdx);
-				--jdx;
-			}
-		}
-		res = WasReplased::NotLambda;
-		break;
-	}
-	case Tok::While:
-		tokens[idx] = shp_t (new WhileKey_t ());
-		res = WasReplased::NotLambda;
-		break;
 
-	case Tok::Return:		{
-		tokens[idx] = shp_t (new Return_t ());
-		res = WasReplased::NotLambda;
+			if (type != Tok::Id) // erase not id-s
+				tokens.erase (std::begin (tokens) + (jdx--));
+		}
+		notLambdaRepl ();
+
 		break;
 	}
-	case Tok::Assert:		{ tokens[idx] = shp_t (new Assert_t ());	res = WasReplased::NotLambda; break; }
-	case Tok::Let:			{ tokens[idx] = shp_t (new Let_t ());		res = WasReplased::NotLambda; break; }
-	case Tok::Throw:		{ tokens[idx] = shp_t (new Throw_t ());		res = WasReplased::NotLambda; break; }
-	case Tok::And:			{ tokens[idx] = shp_t (new And_t ());		res = WasReplased::NotLambda; break; }
-	case Tok::Or:			{ tokens[idx] = shp_t (new Or_t ());		res = WasReplased::NotLambda; break; }
-	case Tok::Not:			{ tokens[idx] = shp_t (new Not_t ());		res = WasReplased::NotLambda; break; }
-	case Tok::Break:		{ tokens[idx] = shp_t (new Break_t ());		res = WasReplased::NotLambda; break; }
-	case Tok::Const:		{ tokens[idx] = shp_t (new Const_t ());		res = WasReplased::NotLambda; break; }
-	case Tok::Import:		{ tokens[idx] = shp_t (new Import_t ());	res = WasReplased::NotLambda; break; }
-	case Tok::As:			{ tokens[idx] = shp_t (new As_t ());		res = WasReplased::NotLambda; break; }
-	case Tok::Empty:		{ tokens[idx] = shp_t (new Empty_t ());		res = WasReplased::NotLambda; break; }
-	case Tok::Delete:		{ tokens[idx] = shp_t (new Delete_t ());	res = WasReplased::NotLambda; break; }
-	case Tok::Continue:		{ tokens[idx] = shp_t (new Continue_t ());  res = WasReplased::NotLambda; break; }
-	case Tok::I16_type: { tokens[idx] = shp_t (new I16_type_t ()); res = WasReplased::NotLambda; break; }
-	case Tok::I32_type:	{ tokens[idx] = shp_t (new I32_type_t ());	res = WasReplased::NotLambda; break; }
-	case Tok::U32_type:	{ tokens[idx] = shp_t (new U32_type_t ());	res = WasReplased::NotLambda; break; }
-	case Tok::F64_type:	{ tokens[idx] = shp_t (new F64_type_t ());res = WasReplased::NotLambda; break; }
-	case Tok::Typename: { tokens[idx] = shp_t (new Typename_t ()); res = WasReplased::NotLambda; break; }
-	case Tok::SharedPtr_type: { tokens[idx] = shp_t (new SharedPtr_type_t ()); res = WasReplased::NotLambda; break; }
-	case Tok::UniquePtr_type: { tokens[idx] = shp_t (new UniquePtr_type_t ()); res = WasReplased::NotLambda; break; }
-	case Tok::Atomic_type: { tokens[idx] = shp_t (new Atomic_type_t ()); res = WasReplased::NotLambda; break; }
-	case Tok::String_type: { tokens[idx] = shp_t (new String_type_t ()); res = WasReplased::NotLambda; break; }
 
 	default: break;
 	}
+
 	return res;
 }
 
-inline bool isOpener (Tok type){ return type == Tok::OpenParenthesis || type == Tok::OpenBrackets || type == Tok::OpenCurlyBrackets; }
-inline bool isCloser (Tok type){ return type == Tok::CloseParenthesis || type == Tok::CloseBrackets || type == Tok::CloseCurlyBrackets; }
+inline bool isOpener (Tok type){
+	return type == Tok::OpenParenthesis || type == Tok::OpenBrackets || type == Tok::OpenCurlyBrackets;
+}
+inline bool isCloser (Tok type){
+	return type == Tok::CloseParenthesis || type == Tok::CloseBrackets || type == Tok::CloseCurlyBrackets;
+}
 
 size_t findCloser (std::vector<shp_t>& tokens, size_t jdx) {
 	const auto size = tokens.size ();
