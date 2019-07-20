@@ -25,17 +25,20 @@ namespace lexer_detect_keys_private
 	enum class WasReplased {
 		Nothing,
 		Lambda,
-		NotLambda
+		NotLambda,
 	};
 }
 
 
-/*	## Loads key words from path ##
+/*
+## Loads key words from path ##
 
-	Needs to be called before lexering and parsing source code.
-	Expected that file in path contain list of pairs:
+Needs to be called before lexering and parsing source code.
+Expected that file in path contain list of pairs:
 
-	[key_word, local_key_word]
+[key_word, local_key_word]
+[key_word, local_key_word]
+[key_word, local_key_word]...
 */
 bool loadKeyWords (const char path[])
 {
@@ -108,10 +111,11 @@ bool loadKeyWords (const char path[])
 	return res;
 }
 
-/*	## Replaces id token with matching key-word token ##
+/*
+## Replaces id token with matching key-word token ##
 	
-	Takes reference to container of tokens, index of token to be
-	replaced to be changed and type of token that needs to be set.
+Takes reference to container of tokens, index of token to be
+replaced to be changed and type of token that needs to be set.
 */
 lexer_detect_keys_private::WasReplased
 	replace (std::vector<shp_t>& tokens, size_t& idx, Tok t)
@@ -196,13 +200,6 @@ lexer_detect_keys_private::WasReplased
 	}
 
 	return res;
-}
-
-inline bool isOpener (Tok type){
-	return type == Tok::OpenParenthesis || type == Tok::OpenBrackets || type == Tok::OpenCurlyBrackets;
-}
-inline bool isCloser (Tok type){
-	return type == Tok::CloseParenthesis || type == Tok::CloseBrackets || type == Tok::CloseCurlyBrackets;
 }
 
 size_t findCloser (std::vector<shp_t>& tokens, size_t jdx) {

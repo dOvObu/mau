@@ -6,7 +6,6 @@
 #include <set>
 
 void parser_1 (std::vector <std::shared_ptr<Token> >& tokens, std::vector<std::vector<std::shared_ptr<Token> >*>& lists);
-bool isCloser(Tok type);
 Tok openerFor(Tok type);
 size_t findOpener(std::vector<std::shared_ptr<Token> >&, Tok, Tok, size_t);
 

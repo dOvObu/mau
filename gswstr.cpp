@@ -78,9 +78,11 @@ void loadABC (const char path[])
 			if (it == L'_') { same = false; continue; }
 			if (!same) t_abc[idx].push_back (it);
 			else if (it != L' ') { s_abc[idx].push_back (it); }
-			if (it != L' ') abc.insert (it);
+			if (it != L' ') { abc.insert (it); }
 		}
 		if (!same) ++idx;
+
+		std::wcout << wb << std::endl;
 	}
 }
 

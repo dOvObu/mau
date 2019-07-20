@@ -129,8 +129,6 @@ void parser_1(std::vector <shp_t>& tokens, std::vector<std::vector<shp_t>*>& lis
 
 }//-----------------------------------------------------------------//
 
-inline bool isOpener (Tok type){return type == Tok::OpenParenthesis || type == Tok::OpenBrackets || type == Tok::OpenCurlyBrackets;}
-inline bool isCloser (Tok type){return type == Tok::CloseParenthesis || type == Tok::CloseBrackets || type == Tok::CloseCurlyBrackets;}
 
 size_t findCloser (std::vector<shp_t>& tokens, Tok opn, Tok cls, size_t jdx) {
 	const auto size = tokens.size();

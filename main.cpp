@@ -19,7 +19,6 @@
 
 
 
-
 int main()
 {
 	using namespace std;
@@ -27,7 +26,7 @@ int main()
 	using shp_t = std::shared_ptr<Token>;
 	//SetConsoleCP (1251);
 	//SetConsoleOutputCP (1251);
-
+	
 	loadABC ("ab.txt");
 	loadKeyWords ("kw.txt");
 	vector <shp_t> tokens;
@@ -65,6 +64,7 @@ int main()
 		return 1;
 	}
 
+
 	printTokens ("\n\n\n===----- after lexer_2 -----===\n\n", tokens, "\n\n\n");
 
 	// Добавление fieldCall obj.kek, functionCall, arrayCall, vectorDef +(1, 2, 3)+,
@@ -85,6 +85,7 @@ int main()
 	puts ("\n\n\n===----- after parser_3 -----===");
 	for (auto& it : lists) printTokens ("\n", *it, "\n");
 	puts ("\n");
+
 
 	// Добавление бинарных операторов
 	////                                      parser_2 (lists);

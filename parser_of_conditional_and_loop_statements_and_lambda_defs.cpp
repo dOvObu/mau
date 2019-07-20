@@ -33,11 +33,6 @@ void parser_3 (std::vector<std::vector<std::shared_ptr<Token> >*>& lists) {
 	// for (auto& tokens : lists) { printf ("\n\n\n"); printTokens (*tokens); printf ("\n\n\n"); }
 }
 
-inline bool isOpener (Tok type) {return type == Tok::OpenParenthesis || type == Tok::OpenBrackets || type == Tok::OpenCurlyBrackets;}
-inline bool isCloser (Tok type) {return type == Tok::CloseParenthesis || type == Tok::CloseBrackets || type == Tok::CloseCurlyBrackets;}
-inline bool isOpenerUnsave (Tok type) {return type == Tok::OpenBody || isOpener (type);}
-inline bool isCloserUnsave (Tok type) {return type == Tok::CloseBody || isCloser (type);}
-
 /*
 void packArguments(
 	LambdaDef_t* p_lambda,

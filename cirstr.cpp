@@ -23,10 +23,11 @@ bool wctoc (wchar_t&& wch, char&& ch) {
 	return res;
 }
 
-std::string cirToLat(std::wstring& s) {
+std::string cirToLat(const std::wstring& s) {
 	using namespace cirstr_private;
-	std::string res;	
-	for (wchar_t& c : s) {
+	std::string res;
+
+	for (const wchar_t& c : s) {
 		if (isLetter (c)) {cToL (c, &res); continue;}
 		if (c == L'_' || c == L' ' || c == L'\n' || c == L'\t') {
 			res.push_back (c);
@@ -53,25 +54,20 @@ std::wstring latToCir (const std::string& s) {
 	using namespace cirstr_private;
 	std::wstring res;
 
-	for (auto& c : s) {
+	for (const auto& c : s) {
 		if (isLetter (c)) {
 			lToC (c, &res);
 			continue;
 		}
-
 		if (c == '_' || c == ' ' || c == '\n' || c == '\t') {
-
 			res.push_back (c);
 			continue;
 		}
-
 		c_c_c = c;
 		ws_ws_ws = &res;
-
 		if (ctowc ('.', L'.')
 			|| ctowc ('0', L'0') || ctowc ('1', L'1') || ctowc ('2', L'2') || ctowc ('3', L'3') || ctowc ('4', L'4')
-			|| ctowc ('5', L'5') || ctowc ('6', L'6') || ctowc ('7', L'7') || ctowc ('8', L'8') || ctowc ('9', L'9') ) continue;
+			|| ctowc ('5', L'5') || ctowc ('6', L'6') || ctowc ('7', L'7') || ctowc ('8', L'8') || ctowc ('9', L'9')) continue;
 	}
-
 	return res;
 }

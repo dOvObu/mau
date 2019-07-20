@@ -15,7 +15,7 @@ struct cirStr
 	cirStr(const std::string& _s) : s (_s){}
 	std::string s;
 };
-std::string cirToLat(std::wstring& cir);
+std::string cirToLat(const std::wstring& cir);
 std::wstring latToCir (const std::string& s);
 
 #endif // CIRSTR_H
