@@ -3,6 +3,7 @@
 #include "tokens.h"
 #include "spy3.h"
 #include "dbg_node.h"
+#include "my_mouse.h"
 #include <SFML/Graphics.hpp>
 
 
@@ -17,7 +18,6 @@ class DbgWindow
 	static void MoveMapFsmUpdate (
 		sf::RenderWindow& window,
 		sf::View& view,
-		float zoom,
 		MoveMapState& moveMapState,
 		sf::Vector2i& startAncor,
 		sf::Vector2i& diffAncor,
@@ -36,10 +36,11 @@ class DbgWindow
 			moveMapState = CountAndShowDiff;
 			diffAncorWas = {0, 0};
 			break;
-		case CountAndShowDiff:
-			view.move (-diffAncorWas.x*zoom, -diffAncorWas.y*zoom);
+		case CountAndShowDiff: {
+			const float zoom = MyMouse::GetZoom ();
+			view.move (-diffAncorWas.x * zoom, -diffAncorWas.y * zoom);
 			diffAncor = startAncor - sf::Mouse::getPosition (window);
-			view.move (diffAncor.x*zoom, diffAncor.y*zoom);
+			view.move (diffAncor.x * zoom, diffAncor.y * zoom);
 
 			if (mouseWasPressed && !mouseIsPressed) {
 				moveMapState = Wait;
@@ -48,6 +49,7 @@ class DbgWindow
 				diffAncorWas = diffAncor;
 			}
 			break;
+		}
 		default:
 			break;
 		}
@@ -57,13 +59,14 @@ public:
 	{
 		sf::RenderWindow window (sf::VideoMode (width, height), "Hello");
 		sf::View view;
+		MyMouse::SetWindowAndView (window, view);
 		view.setCenter (width / 2, height / 2);
 		view.setSize (width, height);
 		sf::Font font;
 		font.loadFromFile (fontPath);
 		MoveMapState moveMapState{MoveMapState::Wait};
 		DbgNode node (&tree, font);
-		float zoom = 1.f;
+		MyMouse::SetZoom (1.f);
 
 		sf::Vector2i mouseStart{0, 0}, mouseDiff{0, 0}, mouseDiffWas{0, 0};
 		bool mouseWasPressed = false;
@@ -82,12 +85,12 @@ public:
 					if (ev.mouseWheel.delta > 0)
 					{
 						zoom_coef -= 0.05f;
-						zoom *= 0.95f;
+						MyMouse::GetZoom () *= 0.95f;
 					}
 					else
 					{
 						zoom_coef += 0.05f;
-						zoom *= 1.05f;
+						MyMouse::GetZoom () *= 1.05f;
 					}
 
 					view.zoom (zoom_coef);
@@ -98,7 +101,6 @@ public:
 			MoveMapFsmUpdate (
 				window,
 				view,
-				zoom,
 				moveMapState,
 				mouseStart,
 				mouseDiff,

@@ -10,6 +10,7 @@
 #include "parser_of_conditional_and_loop_statements_and_lambda_defs.h"
 #include "spy2.h"
 #include "dbg_window.h"
+#include "my_mouse.h"
 
 #include <map>
 #include <cstdio>
