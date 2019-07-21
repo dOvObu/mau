@@ -184,7 +184,7 @@ void lexer_1 (const char path[], std::vector <shp_t>& tokens) {
 						add (new nye_t (), line_idx, idx);
 						continue;
 					}
-					if (ch == L'&' || ch == L'№') {
+					if (ch == L'%') {
 						tryToSetId (prew_t, idx, wb);
 						tryToSetNum (prew_t, idx, wb);
 						add (new Reference_t (), line_idx, idx);
@@ -219,10 +219,10 @@ void lexer_1 (const char path[], std::vector <shp_t>& tokens) {
 				}
 			}
 
-			auto&& prew_t =tokens.empty () ? Tok::Space : tokens.back ()->type ();
+			auto&& prew_t = tokens.empty () ? Tok::Space : tokens.back ()->type ();
 			tryToSetId (prew_t, wb.length (), wb);
 			tryToSetNum (prew_t, wb.length (), wb);
-			add (new Space_t (), line_idx, wb.length ());
+			if (prew_t != Tok::Space) add (new Space_t (), line_idx, wb.length ());
 			if (readyToCloseBody) approvedClosingBody = true;
 		}
 		

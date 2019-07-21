@@ -1,11 +1,12 @@
 ﻿#include "gswstr.h"
-static std::set<wchar_t> abc;
-static std::vector<wchar_t> t_abc[2];
-static std::vector<wchar_t> s_abc[2];
+static std::set<wchar_t> abc; // вообще все буквы (из английского и русского алфавитов)
+static std::vector<wchar_t> t_abc[2]; // не схожие по внешнему виду буквы [0] -- ru, [1] -- en
+static std::vector<wchar_t> s_abc[2]; // схожие по внешнему виду буквы [0] -- ru, [1] -- en
 static std::wstring* ws{nullptr};
 
-
-std::wstring::size_type find_lin(std::vector<wchar_t>& s, wchar_t c) {
+// Возвращает позицию заданной буквы в заданном алфавите, если наёдёт.
+// Иначе, возвращает std::string::npos
+size_t find_lin(std::vector<wchar_t>& s, wchar_t c) {
 	const auto size = s.size (); 
 	for (size_t idx = 0; idx < size; ++idx) {
 		if (s[idx] == c) return idx;
@@ -13,9 +14,12 @@ std::wstring::size_type find_lin(std::vector<wchar_t>& s, wchar_t c) {
 	return std::wstring::npos;
 }
 
+
+// Заносит в конец строки s, символ(ы) латиницы,
+// соответствующий(щие) заданной кириллической букве c.
 void cToL (wchar_t c, std::string* s)
 {
-	std::wstring::size_type idx = 0;
+	size_t idx = std::wstring::npos;
 	if ((idx = find_lin (s_abc[0], c)) != std::wstring::npos) {
 		s->push_back (s_abc[1][idx]);
 		return;
@@ -23,26 +27,32 @@ void cToL (wchar_t c, std::string* s)
 	if ((idx = find_lin (t_abc[0], c)) != std::wstring::npos) {
 		int key = -1;
 		long shift = 0;
-		if (idx > t_abc[1].size () - 3) { key = -2; shift = t_abc[1].size ()-3; }
+		if (idx > (long long)(t_abc[1].size ()) - 3) {
+			key = -2;
+			shift = t_abc[1].size ()-3;
+		}
 		s->push_back (*(t_abc[1].end () + key));
 		s->push_back (t_abc[1][idx - shift]);
 		return;
 	}
-	for (int idx = 1; idx < 2; ++idx) {
-		const auto ch = *(t_abc[1].end () - idx);
-		if (c == ch) {
-			s->push_back (ch);
-			s->push_back (ch);
-			return;
+	if (idx!=std::wstring::npos) {
+		for (size_t idx = 1; idx < 2; ++idx) {
+			const auto ch = *(t_abc[1].end () - idx);
+			if (c == ch) {
+				s->push_back (ch);
+				s->push_back (ch);
+				return;
+			}
 		}
 	}
 	s->push_back (c);
+	if (c == L'Z' || c == L'z') s->push_back (c);
 }
 
 void lToC (char c, std::wstring* s)
 {
 	static int sup = 0;
-	//std::cout << "sup: " << sup << std::endl;
+
 	if (sup == 0) {
 		for (int idx = -1; idx > -3; --idx)
 			if (c == *(t_abc[1].end () + idx)) {
@@ -81,8 +91,6 @@ void loadABC (const char path[])
 			if (it != L' ') { abc.insert (it); }
 		}
 		if (!same) ++idx;
-
-		std::wcout << wb << std::endl;
 	}
 }
 

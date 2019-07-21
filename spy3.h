@@ -1,31 +1,7 @@
 #ifndef SPY3_H
 #define SPY3_H
 #include "tokens.h"
-
-template<typename T>
-struct Tree {
-	Tree (const T& data) : node (new T (data)) {}
-	Tree () = default;
-	~Tree () = default;
-
-	Tree<T>* AddChild (const T& data) {
-		childs.push_back (std::make_unique<Tree<T> > (data));
-		childs.back ()->parent = this;
-		return childs.back ().get ();
-	}
-	void Clear () {
-		node.reset (nullptr);
-		childs.clear ();
-	}
-	Tree<T>* SetData (const T& data) { node.reset (new T (data)); return this; }
-	T& GetData () { return *node; }
-	std::vector<std::unique_ptr<Tree<T>>>& GetChilds () { return childs; }
-
-private:
-	std::unique_ptr<T> node{nullptr};
-	std::vector<std::unique_ptr<Tree<T>>> childs;
-	Tree* parent{nullptr};
-};
+#include "my_tree.h"
 
 struct Spy3 : Runner {
 	Spy3 () {
@@ -33,8 +9,8 @@ struct Spy3 : Runner {
 		nodeStack.push_back (&stringTree);
 	}
 private:
-	Tree<std::wstring> stringTree;
-	std::vector<Tree<std::wstring>*> nodeStack;
+	MyTree<std::wstring> stringTree;
+	std::vector<MyTree<std::wstring>*> nodeStack;
 	void AddChildNode (std::wstring&& str) {
 		nodeStack.back ()->AddChild (str);
 	}
@@ -45,7 +21,7 @@ private:
 		nodeStack.pop_back ();
 	}
 public:
-	Tree<std::wstring>& GetTree () { return stringTree; }
+	MyTree<std::wstring>& GetTree () { return stringTree; }
 
 	void Clear () {
 		stringTree.Clear ();
