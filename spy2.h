@@ -118,8 +118,8 @@ struct Spy2 : Runner {
 };
 
 inline void printTokens_ (std::vector<std::shared_ptr<Token> >& tokens) {
-	Spy2 spy;
-	for (auto& it : tokens) it->run (&spy);
+	//Spy2 spy;
+	//for (auto& it : tokens) it->run (&spy);
 }
 
 inline void printTokens (const char str[], std::vector<std::shared_ptr<Token> >& tokens, const char str2[]) {

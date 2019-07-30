@@ -10,9 +10,9 @@ int main()
 	//SetConsoleCP (1251);
 	//SetConsoleOutputCP (1251);
 	
-	loadABC ("ab.txt");
-	loadKeyWords ("kw.txt");
-	vector <shp_t> tokens;
+	loadABC("ab.txt");
+	loadKeyWords("kw.txt");
+	vector<shp_t> tokens;
 	vector<vector<shp_t>*> lists;
 
 	lexer_1 ("shit_0.txt", tokens);
@@ -58,19 +58,20 @@ int main()
 
 	puts ("\n\n\n===----- after parser_1 -----===");
 	//for (auto& it : lists) printTokens ("\n", *it, "\n");
+	showTokens (*(lists[0]));
 	puts ("\n");
 
 	// Добавление if, if-else, if-elif, if-elif-else, while, for statements
 	// and lambda definitions
 	parser_3 (lists);
+	showTokens (*(lists[0]));
 	std::remove_if (std::begin (lists), std::end (lists), [](auto* t) {return t->empty (); });
-
-
 	puts ("\n\n\n===----- after parser_3 -----===");
-	for (auto& it : lists) printTokens ("\n", *it, "\n");
 	puts ("\n");
 
-	showTokens (*(lists[0]));
+
+	//for (auto& it : lists) printTokens ("\n", *it, "\n");
+
 
 
 	// Добавление бинарных операторов

@@ -7,18 +7,19 @@
 #include <SFML/Graphics.hpp>
 
 
-class DbgWindow
-{
-	enum MoveMapState {
+class dbgWINDOW {
+
+	enum MOVE_MAP_STATE {
 		Wait,
 		SetAncore,
 		CountAndShowDiff,
 	};
 	
+
 	static void MoveMapFsmUpdate (
 		sf::RenderWindow& window,
 		sf::View& view,
-		MoveMapState& moveMapState,
+		MOVE_MAP_STATE& moveMapState,
 		sf::Vector2i& startAncor,
 		sf::Vector2i& diffAncor,
 		sf::Vector2i& diffAncorWas,
@@ -28,14 +29,17 @@ class DbgWindow
 		switch (moveMapState)
 		{
 		case Wait:
-			if (mouseIsPressed && !mouseWasPressed)
+			if (mouseIsPressed && !mouseWasPressed) {
 				moveMapState = SetAncore;
+			}
 			break;
+
 		case SetAncore:
 			startAncor = sf::Mouse::getPosition (window);
 			moveMapState = CountAndShowDiff;
 			diffAncorWas = {0, 0};
 			break;
+
 		case CountAndShowDiff: {
 			const float zoom = MyMouse::GetZoom ();
 			view.move (-diffAncorWas.x * zoom, -diffAncorWas.y * zoom);
@@ -48,47 +52,51 @@ class DbgWindow
 			} else {
 				diffAncorWas = diffAncor;
 			}
+
 			break;
 		}
 		default:
 			break;
 		}
 	}
+
 public:
-	static void Show (MyTree<std::wstring>& tree, const char fontPath[], int width = 860, int height = 640)
+
+	static void Show (MY_TREE<std::wstring>& tree, const char fontPath[], int width = 860, int height = 640)
 	{
 		sf::RenderWindow window (sf::VideoMode (width, height), "Hello");
 		sf::View view;
 		MyMouse::SetWindowAndView (window, view);
+
 		view.setCenter (width / 2, height / 2);
 		view.setSize (width, height);
+
 		sf::Font font;
 		font.loadFromFile (fontPath);
-		MoveMapState moveMapState{MoveMapState::Wait};
-		DbgNode node (&tree, font);
+
+		MOVE_MAP_STATE moveMapState {MOVE_MAP_STATE::Wait};
+		dbgNODE node (&tree, font);
 		MyMouse::SetZoom (1.f);
 
 		sf::Vector2i mouseStart{0, 0}, mouseDiff{0, 0}, mouseDiffWas{0, 0};
 		bool mouseWasPressed = false;
-		while (window.isOpen ())
-		{
+		while (window.isOpen ()) {
+
 			sf::Event ev;
-			while (window.pollEvent (ev))
-			{
-				if (ev.type == sf::Event::Closed || sf::Keyboard::isKeyPressed (sf::Keyboard::Return))
-				{
+			while (window.pollEvent (ev)) {
+
+				if (ev.type == sf::Event::Closed || sf::Keyboard::isKeyPressed (sf::Keyboard::Return)) {
 					window.close ();
 				}
-				if (ev.type == sf::Event::MouseWheelMoved)
-				{
+
+				if (ev.type == sf::Event::MouseWheelMoved) {
+
 					float zoom_coef = 1.f;
-					if (ev.mouseWheel.delta > 0)
-					{
+
+					if (ev.mouseWheel.delta > 0) {
 						zoom_coef -= 0.05f;
 						MyMouse::GetZoom () *= 0.95f;
-					}
-					else
-					{
+					} else {
 						zoom_coef += 0.05f;
 						MyMouse::GetZoom () *= 1.05f;
 					}
@@ -121,9 +129,9 @@ public:
 };
 
 inline void showTokens (std::vector<std::shared_ptr<Token> >& tokens) {
-	Spy3 spy3;
+	SPY3 spy3;
 	for (auto& it : tokens) it->run (&spy3);
-	DbgWindow::Show (spy3.GetTree (), "data/Underdog-Regular.ttf");
+	dbgWINDOW::Show (spy3.GetTree (), "data/Underdog-Regular.ttf");
 }
 
 #endif

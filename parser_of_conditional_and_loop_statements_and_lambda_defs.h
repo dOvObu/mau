@@ -39,10 +39,10 @@ void packLambdaExpr (
     T* p_la_body;
     p_lambda -> body.reset (p_la_body = new T());
     if (!emptyBody) {
-        p_la_body -> l.reset (new vec_shp_t (std::begin (tokens) + body_start, std::begin (tokens) + body_end - 1));
+        p_la_body -> l.reset (new vec_shp_t (std::begin (tokens) + body_start, std::begin (tokens) + body_end));
         lists.push_back (p_la_body -> l.get ());
     }
-
+	 std::cout << "empty body: " << emptyBody << std::endl;
     tokens[la_start] = lambda;
     tokens.erase (std::begin (tokens) + la_start + 1, std::begin (tokens) + body_end);
 };

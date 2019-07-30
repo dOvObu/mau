@@ -6,9 +6,9 @@
 #include "my_mouse.h"
 #include <SFML/Graphics.hpp>
 
-class DbgNode {
+class dbgNODE {
 public:
-	DbgNode (MyTree<std::wstring>* node, sf::Font& font, bool Open = true)
+	dbgNODE (MY_TREE<std::wstring>* node, sf::Font& font, bool Open = true)
 		: open (Open)
 	{
 		std::wstring str = node->GetData ();
@@ -21,8 +21,8 @@ public:
 		width = aabb.width;
 
 		for (auto& it : node->GetChilds ()) {
-			childs.push_back (std::unique_ptr<DbgNode> (
-				new DbgNode (it.get (), font)
+			childs.push_back (std::unique_ptr<dbgNODE> (
+				new dbgNODE (it.get (), font)
 			));
 		}
 	}
@@ -74,7 +74,7 @@ private:
 	bool open, pointed = false, subpointed = false;
 	const int fontSize = 16;
 	sf::Text text;
-	std::vector<std::unique_ptr<DbgNode>> childs;
+	std::vector<std::unique_ptr<dbgNODE>> childs;
 };
 
 #endif

@@ -11,11 +11,10 @@ void reduce_body_of_lambdas_conditions_and_loops (
 );
 
 
-void parser_3 (std::vector<std::vector<std::shared_ptr<Token> >*>& lists) {
+void parser_3 (std::vector<std::vector<std::shared_ptr<Token> >*>& lists)
+{
 	std::vector<std::vector<std::shared_ptr<Token> >*> lists2;
 	// for (auto& it : lists) reduce_conditional_statements (*it);
-	for (auto& tokens : lists) { printTokens_ (*tokens); printf ("\n\n\n"); }
-	dlog ("meh");
 	//*
 	for (auto& it : lists) {
 		if (!it->empty())
@@ -28,7 +27,6 @@ void parser_3 (std::vector<std::vector<std::shared_ptr<Token> >*>& lists) {
 				lists2
 			);
 	}//*/
-	dlog ("hmmm");
 	// не осталось ни одной не осмысленной лямбды, цикла, или условного оператора
 	// for (auto& tokens : lists) { printf ("\n\n\n"); printTokens (*tokens); printf ("\n\n\n"); }
 }
@@ -104,7 +102,6 @@ void packArguments (
 						p_lambda->args[idx].first = la_args[jdx];
 						dlog (jdx);
 						vec_shp_t tmp(std::begin (la_args) + start_type, std::begin (la_args) + mdx);
-						printTokens ("\n---\n", tmp, "\n===\n");
 					}
 					start_args = p_lambda -> args.size ();
 				} else {
@@ -141,7 +138,6 @@ void packArguments (
 		if (isCloser(type)) {--depth; continue;}
 	}
 	//*/
-	//dlog ("done");
 }
 
 void reduce_body_of_lambdas_conditions_and_loops (
@@ -174,7 +170,7 @@ void reduce_body_of_lambdas_conditions_and_loops (
 
 				//*
 				// Если лямбда с несколькими statement-ами
-				if (tokens[kdx] -> type () == Tok::Dot) { // [idx]->'ля' ... [jdx]->'{' [kdx]->'.' ... ';;'<-[?]
+				if (tokens[kdx] -> type () == Tok::Dot || tokens[kdx]->type () == Tok::OpenBodyOfLambda) { // [idx]->'ля' ... [jdx]->'{' [kdx]->'.' ... ';;'<-[?]
 					auto ldx = kdx + 1;
 					while (tokens_size > ldx && tokens[ldx]->type () == Tok::Space) ++ldx;
 					bool emptyBody = true; // лямбда с пустым телом, если (ля х. ;) или (ля х.);
@@ -196,7 +192,7 @@ void reduce_body_of_lambdas_conditions_and_loops (
 							++ldx;
 						}
 					}
-					// [idx]->'ля' ... [jdx]->'{' [kdx]->'.' ... [';;'  v  ';)']<-[ldx]
+					// [idx]->'ля' ... [jdx]->'{' [kdx]->'.' ... [';;'  или  ';)']<-[ldx]
 					// Упаковываем в лямбду аргументы [idx + 1 : jdx] и тело [kdx + 1 : ldx - 1] в виде необработанного набора токенов
 					packLambdaExpr<Expr_t>(emptyBody, idx, jdx, kdx + 1, ldx, tokens, lists);
 				}
@@ -211,9 +207,18 @@ void reduce_body_of_lambdas_conditions_and_loops (
 						if (depth == 0 && type == Tok::Semicolon) break;
 						++ldx;
 					}
-					// [idx]->'ля' ... [jdx]->'{' ... [';'  v  ')']<-[ldx]
+					bool emptyBody = true;
+					for (size_t i = jdx + 1; i < ldx; ++i) {
+						const Tok tok = tokens[i]->type ();
+						if (tok != Tok::Space) {
+							emptyBody = tok == Tok::Semicolon;
+							if (emptyBody) ldx = i;
+							break;
+						}
+					}
+					// [idx]->'ля' ... [jdx]->'{' ... [';'  или  ')']<-[ldx]
 					// Упаковываем в лямбду аргументы [idx + 1 : jdx] и возвращаемое значение [jdx + 1 : ldx]
-					packLambdaExpr <Return_t>(false, idx, jdx, jdx + 1, ldx, tokens, lists);
+					packLambdaExpr <Return_t>(emptyBody, idx, jdx, jdx + 1, ldx, tokens, lists);
 				}
 				//*/
 			}
